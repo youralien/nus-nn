@@ -3,7 +3,9 @@ import theano
 from theano import tensor as T
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 from sklearn.metrics import accuracy_score
-from faces import faces
+from faces import faces, permute
+
+from foxhound.inits import Orthogonal
 
 srng = RandomStreams()
 
@@ -17,7 +19,9 @@ def floatX(X):
     return np.asarray(X, dtype=theano.config.floatX)
 
 def init_weights(shape):
-    return theano.shared(floatX(np.random.randn(*shape) * 0.02))
+    orth_init = Orthogonal()
+    return orth_init(shape)
+    # return theano.shared(floatX(np.random.randn(*shape) * 0.02))
 
 def sgd(cost, params, lr=0.05):
     grads = T.grad(cost=cost, wrt=params)
@@ -60,7 +64,7 @@ w_h = init_weights((input_dim, 50))
 w_o = init_weights((50, 1))
 
 py_x = model(X, w_h, w_o, 0.5, 0.5)
-y_pred = T.round(model(X, w_h, w_o, 0., 0.))
+y_pred = model(X, w_h, w_o, 0., 0.) > 0.5
 
 cost = T.mean(T.nnet.binary_crossentropy(py_x, Y))
 params = [w_h, w_o]
@@ -74,4 +78,5 @@ for i in range(100):
     for start, end in zip(range(0, len(trX), batch_size), range(batch_size, len(trX), batch_size)):
         cost = train(trX[start:end], trY[start:end])
     print i, np.mean(trY == predict(trX)), np.mean(teY == predict(teX))
+    trX, trY = permute(trX, trY) 
     # print i, np.mean(np.argmax(teY, axis=1) == predict(teX))

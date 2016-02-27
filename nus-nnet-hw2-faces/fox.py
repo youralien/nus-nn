@@ -25,7 +25,7 @@ def model_perceptron(input_shape):
 def model_MLP(input_shape):
     model = [
         ops.Input(['x', input_shape])
-      , ops.Project(dim=256)
+      , ops.Project(dim=50)
       , ops.Activation('tanh')
       , ops.Project(dim=1)
       , ops.Activation('sigmoid')
@@ -44,8 +44,8 @@ model = model_MLP(trX.shape[1])
 model = Network(model, iterator=iterator)
  
 continue_epochs = True
-min_cost_delta = .00001
-min_cost = .001
+min_cost_delta = .0001
+min_cost = .1
 cost0, cost1 = None, None
 epoch_count = 0
 
@@ -60,7 +60,7 @@ while continue_epochs:
         if ( (cost1 - cost0) <= min_cost_delta ) and (cost1 <= min_cost):
             continue_epochs = False
     # Eval Train/Test Error Every N Epochs
-    if epoch_count % 1 == 0:
+    if epoch_count % 5 == 0:
         if binary_output:
             trYpred = model.predict(trX) > 0.5
             teYpred = model.predict(teX) > 0.5
