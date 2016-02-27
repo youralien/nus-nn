@@ -59,7 +59,7 @@ Y = T.fmatrix()
 w_h = init_weights((input_dim, 50))
 w_o = init_weights((50, 1))
 
-py_x = model(X, w_h, w_o, 0.5, 0.5)
+py_x = model(X, w_h, w_o, 0., 0.)
 y_pred = model(X, w_h, w_o, 0., 0.) > 0.5
 
 cost = T.mean(T.nnet.binary_crossentropy(py_x, Y))
