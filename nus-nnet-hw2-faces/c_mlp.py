@@ -69,10 +69,10 @@ update = sgd(cost, params, lr=0.1)
 
 train = theano.function(inputs=[X, Y], outputs=cost, updates=update, allow_input_downcast=True)
 predict = theano.function(inputs=[X], outputs=y_pred, allow_input_downcast=True)
-batch_size=800
+batch_size=80
 for i in range(100):
     for start, end in zip(range(0, len(trX), batch_size), range(batch_size, len(trX), batch_size)):
         cost = train(trX[start:end], trY[start:end])
-    print i, 1-np.mean(trY == predict(trX)), 1-np.mean(teY == predict(teX))
-    trX, trY = permute(trX, trY) 
-    # print i, np.mean(np.argmax(teY, axis=1) == predict(teX))
+    if i % 10 == 0:
+        print i, 1-np.mean(trY == predict(trX)), 1-np.mean(teY == predict(teX))
+        trX, trY = permute(trX, trY) 
