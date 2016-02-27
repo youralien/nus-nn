@@ -5,8 +5,6 @@ from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 from sklearn.metrics import accuracy_score
 from faces import faces, permute
 
-from foxhound.inits import Orthogonal
-
 srng = RandomStreams()
 
 trX, trY, teX, teY = faces(zscore=True, onehot=False)
@@ -19,9 +17,7 @@ def floatX(X):
     return np.asarray(X, dtype=theano.config.floatX)
 
 def init_weights(shape):
-    orth_init = Orthogonal()
-    return orth_init(shape)
-    # return theano.shared(floatX(np.random.randn(*shape) * 0.02))
+    return theano.shared(floatX(np.random.randn(*shape) * 0.02))
 
 def sgd(cost, params, lr=0.05):
     grads = T.grad(cost=cost, wrt=params)
