@@ -34,7 +34,7 @@ def z_score(matrix):
         matrix[:,col] = (matrix[:,col] - mu) / sigma
     return matrix
 
-def faces(zscore=False, onehot=False):
+def faces(zscore=False, onehot=False, adjust_targets=False):
 
     features = pd.read_csv('unnormalized_data_faces.csv')
     target = pd.read_csv('unnormalized_data_faces_target.csv')
@@ -44,6 +44,10 @@ def faces(zscore=False, onehot=False):
 
     if zscore:
         X = z_score(X)
+
+    if adjust_targets:
+        Y[np.where(Y == 1)] = 0.8
+        Y[np.where(Y == 0)] = 0.2
 
     trX, trY, teX, teY = traintestset(X, Y)
 

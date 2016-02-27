@@ -25,3 +25,7 @@
 - train error: 0.0
 - test error: 0.07
 - these favorable metrics were achieved more quickly than the other methods, approaching these metrics within a handlful of epochs
+
+# adjusting the target values to be within the sigmoid range
+- DRAMATIC improvements in convergence and test error. Converged in 10 epochs, as opposed to 30 +. Also achieves 0.0% test error?!
+- TODO: should check if theres a weird thing in my calculations

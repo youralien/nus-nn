@@ -7,7 +7,7 @@ from faces import faces, permute
 
 srng = RandomStreams()
 
-trX, trY, teX, teY = faces(zscore=True, onehot=False)
+trX, trY, teX, teY = faces(zscore=True, onehot=False, adjust_targets=True)
 print trX.shape
 print trY.shape
 input_dim = trX.shape[1]
@@ -56,8 +56,9 @@ def model(X, w_h, w_o, p_drop_input, p_drop_hidden):
 X = T.fmatrix()
 Y = T.fmatrix()
 
-w_h = init_weights((input_dim, 50))
-w_o = init_weights((50, 1))
+h_size = 128
+w_h = init_weights((input_dim, h_size))
+w_o = init_weights((h_size, 1))
 
 py_x, h = model(X, w_h, w_o, 0., 0.)
 y_proba, h = model(X, w_h, w_o, 0., 0.)
@@ -65,23 +66,23 @@ y_pred = y_proba > 0.5
 
 cost = T.mean(T.nnet.binary_crossentropy(py_x, Y))
 params = [w_h, w_o]
-update = sgd(cost, params, lr=0.1) 
+update = sgd(cost, params, lr=0.001) 
 # update = RMSprop(cost, params)
 
 train = theano.function(inputs=[X, Y], outputs=cost, updates=update, allow_input_downcast=True)
 predict = theano.function(inputs=[X], outputs=y_pred, allow_input_downcast=True)
 compute_H = theano.function(inputs=[X], outputs=h, allow_input_downcast=True)
 batch_size=80
-for i in range(100):
+for i in range(15):
     for start, end in zip(range(0, len(trX), batch_size), range(batch_size, len(trX), batch_size)):
         cost = train(trX[start:end], trY[start:end])
-    if i % 10 == 0:
+    if i % 1 == 0:
         print i, 1-np.mean(trY == predict(trX)), 1-np.mean(teY == predict(teX))
         trX, trY = permute(trX, trY)
 H = compute_H(trX)
 _0 , svals, _1 = np.linalg.svd(H)
 
-def compute_effective_rank(svals, gamma=0.95):
+def compute_effective_rank(svals, gamma=0.99):
     effective_rank = 1
     for k in range(1, svals.shape[0]):
         if np.sum(svals[:k]) / np.sum(svals) >= gamma:
