@@ -64,8 +64,8 @@ y_pred = model(X, w_h, w_o, 0., 0.) > 0.5
 
 cost = T.mean(T.nnet.binary_crossentropy(py_x, Y))
 params = [w_h, w_o]
-# update = sgd(cost, params, lr=0.1) 
-update = RMSprop(cost, params)
+update = sgd(cost, params, lr=0.1) 
+# update = RMSprop(cost, params)
 
 train = theano.function(inputs=[X, Y], outputs=cost, updates=update, allow_input_downcast=True)
 predict = theano.function(inputs=[X], outputs=y_pred, allow_input_downcast=True)
