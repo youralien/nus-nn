@@ -44,6 +44,7 @@ def faces(zscore=False, onehot=False, adjust_targets=False):
 
     if zscore:
         print "faces:py: make features zero mean and unit variance"
+        X = np.asarray(X, dtype='float32')
         X = z_score(X)
 
     if adjust_targets:
@@ -62,5 +63,5 @@ def faces(zscore=False, onehot=False, adjust_targets=False):
 if __name__ == "__main__":
     trX, trY, teX, teY = faces(zscore=True, adjust_targets=True)
     xcol = trX[:,np.random.randint(trX.shape[1])]
-    print "X min: {}, X max: {}".format(xcol.min(), xcol.max())
+    print "X min: {}, X max: {}, X mean: {}, X variance: {}".format(xcol.min(), xcol.max(), xcol.mean(), xcol.std()**2)
     print "Y min: {}, Y max: {}".format(trY.min(), trY.max())
