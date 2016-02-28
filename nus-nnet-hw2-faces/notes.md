@@ -1,9 +1,9 @@
 # batch mode 
 
-- SGD with learning rate 0.1
-- train error: 0.15
-- test error: 0.17
-- over epochs, the error does not change. seems like this run was a lucky initialization.
+- SGD with learning rate 0.05
+- 100 epochs
+- train error: 0.04
+- test error: 0.05
 
 # sequential mode
 
@@ -26,5 +26,4 @@
 - these favorable metrics were achieved more quickly than the other methods, approaching these metrics within a handlful of epochs
 
 # adjusting the target values to be within the sigmoid range
-- DRAMATIC improvements in convergence and test error. Converged in 10 epochs, as opposed to 30 +. Also achieves 0.0% test error?!
-- TODO: should check if theres a weird thing in my calculations
+- TODO: observe effects now that I fixed the bug

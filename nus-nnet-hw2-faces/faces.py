@@ -43,9 +43,12 @@ def faces(zscore=False, onehot=False, adjust_targets=False):
     Y = target.values
 
     if zscore:
+        print "faces:py: make features zero mean and unit variance"
         X = z_score(X)
 
     if adjust_targets:
+        print "faces.py: adjusting targets to be in the sigmoid range"
+        Y = np.asarray(Y, dtype='float32')
         Y[np.where(Y == 1)] = 0.8
         Y[np.where(Y == 0)] = 0.2
 
@@ -56,3 +59,8 @@ def faces(zscore=False, onehot=False, adjust_targets=False):
         teY = one_hot(teY, 2)
     return trX, trY,teX, teY
 
+if __name__ == "__main__":
+    trX, trY, teX, teY = faces(zscore=True, adjust_targets=True)
+    xcol = trX[:,np.random.randint(trX.shape[1])]
+    print "X min: {}, X max: {}".format(xcol.min(), xcol.max())
+    print "Y min: {}, Y max: {}".format(trY.min(), trY.max())

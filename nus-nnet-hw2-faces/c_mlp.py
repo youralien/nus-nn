@@ -7,7 +7,7 @@ from faces import faces, permute
 
 srng = RandomStreams()
 
-trX, trY, teX, teY = faces(zscore=True, onehot=False, adjust_targets=False)
+trX, trY, teX, teY = faces(zscore=True, onehot=False, adjust_targets=True)
 print trX.shape
 print trY.shape
 input_dim = trX.shape[1]
@@ -72,7 +72,7 @@ for i in range(100):
     else:
         cost = train(trX, trY)
     if i % 1 == 0:
-        print i, 1-np.mean(trY == predict(trX)), 1-np.mean(teY == predict(teX))
+        print i, 1-np.mean((trY > 0.5) == predict(trX)), 1-np.mean((teY > 0.5) == predict(teX))
         trX, trY = permute(trX, trY)
 H = compute_H(trX)
 _0 , svals, _1 = np.linalg.svd(H)
