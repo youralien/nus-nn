@@ -1,6 +1,5 @@
 # batch mode 
 
-- 800 examples to compute the gradient
 - SGD with learning rate 0.1
 - train error: 0.15
 - test error: 0.17
@@ -9,11 +8,11 @@
 # sequential mode
 
 - 1 example at a time, for an entire epoch
-- SGD with learning rate 0.1
-- train error: 0.15
+- SGD with learning rate 0.0005
+- 100 epochs
 - the training examples were shuffled each epoch
-- train error: 0.08
-- test error: 0.13
+- train error: 0.0
+- test error: 0.08
 - over epochs, the error does fluctate, even becoming worse at times (stochastic jumping in and out of minima)
 
 # mini batch mode

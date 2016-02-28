@@ -55,7 +55,7 @@ y_pred = y_proba > 0.5
 # -- learning rate is coupled with batch size!
 # batch_size=''; learning_rate=0.05; # batch mode: entire batch
 batch_size=1; learning_rate=0.0005; # sequential mode: single example
-# batch_size=80; learning_rate=0.005; # minibatches
+# batch_size=80; learning_rate=0.01; # minibatches
 
 cost = T.mean(T.nnet.binary_crossentropy(py_x, Y))
 params = [w_h, w_o]
@@ -65,7 +65,7 @@ train = theano.function(inputs=[X, Y], outputs=cost, updates=update, allow_input
 predict = theano.function(inputs=[X], outputs=y_pred, allow_input_downcast=True)
 compute_H = theano.function(inputs=[X], outputs=h, allow_input_downcast=True)
 
-for i in range(50):
+for i in range(100):
     if isinstance(batch_size, int):
         for start, end in zip(range(0, len(trX), batch_size), range(batch_size, len(trX), batch_size)):
             cost = train(trX[start:end], trY[start:end])
