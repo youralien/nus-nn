@@ -12,7 +12,7 @@ from faces import faces
 
 binary_output = True
 
-trX, trY, teX, teY = faces(zscore=True)
+trX, trY, teX, teY = faces(zscore=True, adjust_targets=True)
 
 def model_perceptron(input_shape):
     model = [
@@ -25,7 +25,15 @@ def model_perceptron(input_shape):
 def model_MLP(input_shape):
     model = [
         ops.Input(['x', input_shape])
-      , ops.Project(dim=50)
+      , ops.Project(dim=1000)
+      , ops.Activation('tanh')
+      , ops.Project(dim=500)
+      , ops.Activation('tanh')
+      , ops.Project(dim=75)
+      , ops.Activation('tanh')
+      , ops.Project(dim=75)
+      , ops.Activation('tanh')
+      , ops.Project(dim=75)
       , ops.Activation('tanh')
       , ops.Project(dim=1)
       , ops.Activation('sigmoid')
@@ -39,13 +47,13 @@ if binary_output:
     trYt = lambda y: floatX(y)
 else:
     trYt = lambda y: floatX(OneHot(y, 2))
-iterator = iterators.Linear(size=100, trXt=trXt, teXt=teXt, trYt=trYt)
+iterator = iterators.Linear(size=80, trXt=trXt, teXt=teXt, trYt=trYt)
 model = model_MLP(trX.shape[1])
 model = Network(model, iterator=iterator)
  
 continue_epochs = True
-min_cost_delta = .0001
-min_cost = .1
+min_cost_delta = .00001
+min_cost = .001
 cost0, cost1 = None, None
 epoch_count = 0
 
@@ -60,16 +68,14 @@ while continue_epochs:
         if ( (cost1 - cost0) <= min_cost_delta ) and (cost1 <= min_cost):
             continue_epochs = False
     # Eval Train/Test Error Every N Epochs
-    if epoch_count % 5 == 0:
+    if epoch_count % 10 == 0:
         if binary_output:
             trYpred = model.predict(trX) > 0.5
             teYpred = model.predict(teX) > 0.5
         else:
             trYpred = np.argmax(model.predict(trX), axis=1)
             teYpred = np.argmax(model.predict(teX), axis=1)
-        print trY.shape
-        print trYpred.shape
-        train_error = 1 - accuracy_score(trY.flatten(), trYpred)
-        test_error = 1 - accuracy_score(teY.flatten(), teYpred)
+        train_error = 1 - accuracy_score(trY.flatten() > 0.5, trYpred)
+        test_error = 1 - accuracy_score(teY.flatten() > 0.5, teYpred)
         print "Train Error: ", train_error
         print "Test Error: ", test_error
