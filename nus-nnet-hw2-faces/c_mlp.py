@@ -7,7 +7,7 @@ from faces import faces, permute
 
 srng = RandomStreams()
 
-trX, trY, teX, teY = faces(zscore=True, onehot=False, adjust_targets=True)
+trX, trY, teX, teY = faces(zscore=True, onehot=False, adjust_targets=False)
 print trX.shape
 print trY.shape
 input_dim = trX.shape[1]
@@ -24,18 +24,6 @@ def sgd(cost, params, lr=0.05):
     updates = []
     for p, g in zip(params, grads):
         updates.append([p, p - g * lr])
-    return updates
-
-def RMSprop(cost, params, lr=0.001, rho=0.9, epsilon=1e-6):
-    grads = T.grad(cost=cost, wrt=params)
-    updates = []
-    for p, g in zip(params, grads):
-        acc = theano.shared(p.get_value() * 0.)
-        acc_new = rho * acc + (1 - rho) * g ** 2
-        gradient_scaling = T.sqrt(acc_new + epsilon)
-        g = g / gradient_scaling
-        updates.append((acc, acc_new))
-        updates.append((p, p - lr * g))
     return updates
 
 def dropout(X, p=0.):
@@ -64,18 +52,25 @@ py_x, h = model(X, w_h, w_o, 0., 0.)
 y_proba, h = model(X, w_h, w_o, 0., 0.)
 y_pred = y_proba > 0.5
 
+# -- learning rate is coupled with batch size!
+# batch_size=''; learning_rate=0.05; # batch mode: entire batch
+batch_size=1; learning_rate=0.0005; # sequential mode: single example
+# batch_size=80; learning_rate=0.005; # minibatches
+
 cost = T.mean(T.nnet.binary_crossentropy(py_x, Y))
 params = [w_h, w_o]
-update = sgd(cost, params, lr=0.001) 
-# update = RMSprop(cost, params)
+update = sgd(cost, params, lr=learning_rate) 
 
 train = theano.function(inputs=[X, Y], outputs=cost, updates=update, allow_input_downcast=True)
 predict = theano.function(inputs=[X], outputs=y_pred, allow_input_downcast=True)
 compute_H = theano.function(inputs=[X], outputs=h, allow_input_downcast=True)
-batch_size=80
-for i in range(15):
-    for start, end in zip(range(0, len(trX), batch_size), range(batch_size, len(trX), batch_size)):
-        cost = train(trX[start:end], trY[start:end])
+
+for i in range(50):
+    if isinstance(batch_size, int):
+        for start, end in zip(range(0, len(trX), batch_size), range(batch_size, len(trX), batch_size)):
+            cost = train(trX[start:end], trY[start:end])
+    else:
+        cost = train(trX, trY)
     if i % 1 == 0:
         print i, 1-np.mean(trY == predict(trX)), 1-np.mean(teY == predict(teX))
         trX, trY = permute(trX, trY)
