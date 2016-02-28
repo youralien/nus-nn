@@ -27,8 +27,8 @@ X = T.fmatrix()
 Y = T.fmatrix()
 
 # theano.config.compute_test_value = 'warn' # Use 'warn' to activate this featureg
-X.tag.test_value = np.zeros((1, input_dim), dtype='float32')
-Y.tag.test_value = np.zeros((1, 1), dtype='float32')
+# X.tag.test_value = np.zeros((1, input_dim), dtype='float32')
+# Y.tag.test_value = np.zeros((1, 1), dtype='float32')
 
 w_o = init_weights((input_dim, 1))
 
