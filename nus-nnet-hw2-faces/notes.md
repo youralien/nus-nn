@@ -75,4 +75,14 @@ epoch, train , test
 0    , 0.1362, 0.0553
 90   , 0.0000, 0.0452
 
+compare this to batch mode learning, where updates are slow and often we are stuck with local minima
+epoch, train , test
+0    , 0.1188, 0.1407
+90   , 0.0663, 0.1156
+
+with a good initialization, the results are desirable as we obtain good error measures for both train and test (no overfitting happens, coincidentally).  However, the test error is still higher than the two learning procedures using sequential mode.
+
+epoch, train , test
+0    , 0.1288, 0.0955
+90   , 0.0763, 0.0704
 
