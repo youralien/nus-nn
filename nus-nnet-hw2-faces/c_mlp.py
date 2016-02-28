@@ -44,26 +44,32 @@ def model(X, w_h, w_o, p_drop_input, p_drop_hidden):
 X = T.fmatrix()
 Y = T.fmatrix()
 
-h_size = 128
-w_h = init_weights((input_dim, h_size))
-w_o = init_weights((h_size, 1))
+h1_size = 128 
+w_h1 = init_weights((input_dim, h1_size))
+w_o = init_weights((h1_size, 1))
 
-py_x, h = model(X, w_h, w_o, 0., 0.)
-y_proba, h = model(X, w_h, w_o, 0., 0.)
+# p_dropout = 0.2 # healthy amounts of dropout
+p_dropout = 0.  # no drop out
+py_x, h1 = model(X, w_h1, w_o, p_dropout, p_dropout)
+y_proba, h1 = model(X, w_h1, w_o, 0., 0.)
 y_pred = y_proba > 0.5
 
 # -- learning rate is coupled with batch size!
 # batch_size=''; learning_rate=0.05; # batch mode: entire batch
 batch_size=1; learning_rate=0.0005; # sequential mode: single example
-# batch_size=80; learning_rate=0.01; # minibatches
+# batch_size=80; learning_rate=0.1; # minibatches
 
 cost = T.mean(T.nnet.binary_crossentropy(py_x, Y))
-params = [w_h, w_o]
+params = [w_h1, w_o]
 update = sgd(cost, params, lr=learning_rate) 
 
 train = theano.function(inputs=[X, Y], outputs=cost, updates=update, allow_input_downcast=True)
 predict = theano.function(inputs=[X], outputs=y_pred, allow_input_downcast=True)
-compute_H = theano.function(inputs=[X], outputs=h, allow_input_downcast=True)
+compute_H = theano.function(inputs=[X], outputs=h1, allow_input_downcast=True)
+
+print "batch_size: ", batch_size
+print "learning_rate: ", learning_rate
+print "p_dropout", p_dropout
 
 for i in range(100):
     if isinstance(batch_size, int):
@@ -71,8 +77,8 @@ for i in range(100):
             cost = train(trX[start:end], trY[start:end])
     else:
         cost = train(trX, trY)
-    if i % 1 == 0:
-        print i, 1-np.mean((trY > 0.5) == predict(trX)), 1-np.mean((teY > 0.5) == predict(teX))
+    if i % 10 == 0:
+        print "%d,%0.4f,%0.4f" % (i, 1-np.mean((trY > 0.5) == predict(trX)), 1-np.mean((teY > 0.5) == predict(teX)))
         trX, trY = permute(trX, trY)
 H = compute_H(trX)
 _0 , svals, _1 = np.linalg.svd(H)
