@@ -56,8 +56,8 @@ y_pred = y_proba > 0.5
 
 # -- learning rate is coupled with batch size!
 # batch_size=''; learning_rate=0.05; # batch mode: entire batch
-batch_size=1; learning_rate=0.0005; # sequential mode: single example
-# batch_size=80; learning_rate=0.1; # minibatches
+# batch_size=1; learning_rate=0.0005; # sequential mode: single example
+batch_size=20; learning_rate=0.05; # minibatches
 
 cost = T.mean(T.nnet.binary_crossentropy(py_x, Y))
 params = [w_h1, w_o]
