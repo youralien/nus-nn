@@ -44,12 +44,12 @@ def model(X, w_h, w_o, p_drop_input, p_drop_hidden):
 X = T.fmatrix()
 Y = T.fmatrix()
 
-h1_size = 128 
+h1_size = 256 
 w_h1 = init_weights((input_dim, h1_size))
 w_o = init_weights((h1_size, 1))
 
-# p_dropout = 0.2 # healthy amounts of dropout
-p_dropout = 0.  # no drop out
+p_dropout = 0.5 # healthy amounts of dropout
+# p_dropout = 0.  # no drop out
 py_x, h1 = model(X, w_h1, w_o, p_dropout, p_dropout)
 y_proba, h1 = model(X, w_h1, w_o, 0., 0.)
 y_pred = y_proba > 0.5
@@ -57,7 +57,8 @@ y_pred = y_proba > 0.5
 # -- learning rate is coupled with batch size!
 # batch_size=''; learning_rate=0.05; # batch mode: entire batch
 # batch_size=1; learning_rate=0.0005; # sequential mode: single example
-batch_size=20; learning_rate=0.05; # minibatches
+batch_size=20; learning_rate=0.05; # minibatches good for SGD, like sequential
+# batch_size=80; learning_rate=0.001; # minibatches for adaptive learning rules
 
 cost = T.mean(T.nnet.binary_crossentropy(py_x, Y))
 params = [w_h1, w_o]
