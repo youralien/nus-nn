@@ -34,7 +34,7 @@ def z_score(matrix):
         matrix[:,col] = (matrix[:,col] - mu) / sigma
     return matrix
 
-def faces(zscore=False, onehot=False, adjust_targets=False):
+def faces(zscore=False, onehot=False, adjust_targets=False, perceptron=False):
 
     features = pd.read_csv('unnormalized_data_faces.csv')
     target = pd.read_csv('unnormalized_data_faces_target.csv')
@@ -52,6 +52,12 @@ def faces(zscore=False, onehot=False, adjust_targets=False):
         Y = np.asarray(Y, dtype='float32')
         Y[np.where(Y == 1)] = 0.8
         Y[np.where(Y == 0)] = 0.2
+
+    if perceptron:
+        print "faces.py: targets are [-1, 1]"
+        Y = np.asarray(Y, dtype='int64')
+        Y[np.where(Y == 0)] = -1
+
 
     trX, trY, teX, teY = traintestset(X, Y)
 
