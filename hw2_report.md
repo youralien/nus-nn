@@ -217,12 +217,71 @@ And the rest of the code which trained the networks and plotted their fitting re
     end
 
 ## Q3: a)
-Since the last number of my ID equals 3, I will be working with the Gender Classification task.
+Since the last number of my ID equals 3, I will be working with the Gender Classification task.  For the binary labels, `{'Male': 1, 'Female': 0}`.
+
+Train Set: 1000 Examples
+Negative Examples: 0.261000
+Postive  Examples: 0.739000
+
+Test Set: 250 Examples
+Negative Examples: 0.264000
+Postive  Examples: 0.736000
+
+## Q3: training notes
+Before discussing the performance metrics for gender classification, using the various network architectures and learning procedures, I want to talk about some important preprocessing used on the data which was given to all the models.
+
+Most of my early experiments involved taking the recommendations from the notes: 
+
+1. normalize each of the features over the dataset by computing the zscore per-feature.
+
+2. adjusted the targets to be `{0.2, 0.8}`, values inside the range of the sigmoid output activation function
+
+However I was still unable to achieve satisfactory test accuracies with this scheme.  When I visualized these zscore features, I thought I might have discovered my problem.
+
+![Face using zscore normalization on each feature, where `mu`
+ and `sigma` are computed across the dataset](nus-nnet-hw2-faces/example_face_zscore.png){height=250px}
+
+While the current strategy was making my features in the viable range for the tanh activation units to operate properly, the image itself lost lots of its visual meaning!  As an alternative, I read about an idea to zscore over a single example image, an operation that corresponds to contrast normalization.
+
+![Face using zscore normalization on the entire image, where mu and sigma are computed over the pixel values of a single example image](nus-nnet-hw2-faces/example_face_contrast.png){height=250px}
+
+The pixel intensities of this visualization seem much more representative of a human face, while still benefiting from having the values in the range for the activation units to operate properly. 
 
 ## Q3: b)
+The perceptron used a learning rate of 0.001.
+
+Train Error: 0.00
+Test Error: 0.16
+
+![Perceptron learning on per-example contrast normalized data](nus-nnet-hw2-faces/contrast_perf_perceptron.png)
+
+
 ## Q3: c)
+For SGD sequential learning, the following hyperparameters were used:
+
+- learning_rate=0.0005
+- epochs=35
+
+Even with the small learning rate, the cost over epochs fluctated, as expected.  In addition, we typically saw training error convergence within 30 epochs; any longer, and the test error would continually get worse.  Choosing the maximum epochs to be relatively low served as an early stopping strategy.
+
+Train Error: 0.00
+Test Error: 0.15
+
+![MLP with sequential mode learning on per-example contrast normalized data](nus-nnet-hw2-faces/contrast_perf_mlp_seque.png)
+
 ## Q3: d)
+For SGD batch learning, the following hyperparameters were used:
+- learning_rate=0.05
+- epochs=150
+
+Train Error: 0.00
+Test Error: 0.09
+
+![MLP with batch mode learning on per-example contrast normalized data](nus-nnet-hw2-faces/contrast_perf_mlp_batch.png)
+
 ## Q3: e)
+The importance of having the eyes of each face centered at the same place cannot be overstated. Having the same pixels in the image across the dataset correspond to the eyes means that the model can reliably learn patterns from these eye features.  In addition, other parts of the face like glasses, eye brows, and cheek bones are spatially close to the eyes, and likely will benefit similarly in the fixing of the pixel positions for these important facial characteristics. 
+
 ## Q3: f)
 
 
