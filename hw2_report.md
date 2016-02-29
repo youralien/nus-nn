@@ -2,13 +2,14 @@
 by Ryan Louie, A0149643X
 
 ## Q1: a)
-Using gradient descent, with a `learning rate = 0.001`, we defined convergence to the minimum where `f(x,y) = 0` when the function value was within `epsilon = 0.01` of 0.  As depicted below, the learning converges after XXX iterations.
-![Gradient Descent: Weight Trajectory and Function Value over learning](hw2_q1_firstorder_0.001.png)
+Using gradient descent, with a `learning rate = 0.001`, we defined convergence to the minimum where `f(x,y) = 0` when the function value was within `epsilon = 0.01` of 0.  As depicted below, the learning converges after 3099 iterations.
+![Gradient Descent, lr=0.001: Weight Trajectory and Function Value over learning](hw2_q1_gradientdescent.png)
 
 Using a learning rate that is too large (`learning rate = 0.1`) results in the learning diverging, where the function value is no longer decreasing over iterations.
+![Gradient Descent, lr=0.1: Weight Trajectory and Function Value over learning](hw2_q1_gradientdescent_learning_rate_too_high.png)
 
 ## Q1: b)
-Newton's method is a huge improvement over gradient descent.  The learning converges in as little as 4 iterations.
+Newton's method is a huge improvement over gradient descent.  The learning converges in as little as 7 iterations. Looking at the top axes describing the change in weights in the 2-D space, we can see that large jumps in `(X,Y)` are achieved that progress closer to where the function minimum is located at `(1,1)`,
 ![Newton's Method: Weight Trajectory and Function Value over learning](hw2_q1_newton.png)
 
 ## Q1: code
@@ -51,9 +52,10 @@ Newton's method is a huge improvement over gradient descent.  The learning conve
     ylabel('Input Y')
 
     subplot(2,1,2)
-    plot(out(1:iter))
+    semilogy(out(1:iter))
     xlabel('Iterations')
-    ylabel('Function Value')
+    ylabel('Function Value (log)')
+    ylim([0 100])
 
 The functions to compute the function value, gradient, and hessian of Rosenbrock's Valley are defined as follows
 
