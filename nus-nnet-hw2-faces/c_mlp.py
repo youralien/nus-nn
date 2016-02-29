@@ -58,8 +58,8 @@ y_proba, h1 = model(X, w_h1, w_o, 0., 0.)
 y_pred = y_proba > 0.5
 
 # -- learning rate is coupled with batch size!
-# batch_size=''; learning_rate=0.05; epochs=100; # batch mode: entire batch
-batch_size=1; learning_rate=0.0005; epochs=35; # sequential mode: single example
+batch_size=''; learning_rate=0.05; epochs=150; # batch mode: entire batch
+# batch_size=1; learning_rate=0.0005; epochs=35; # sequential mode: single example
 # batch_size=20; learning_rate=0.05; epochs=35;# minibatches good for SGD, like sequential
 
 cost = T.mean(T.nnet.binary_crossentropy(py_x, Y))
