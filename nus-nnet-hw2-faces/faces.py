@@ -48,12 +48,14 @@ def faces(zscore=False, onehot=False, adjust_targets=False, perceptron=False, co
     te_features = pd.read_csv('TestFeats.csv', header=None)
     te_target = pd.read_csv('TestLabels.csv', header=None)
 
-    def helper(features, target, zscore, adjust_targets, perceptron, constrast):
-        X = features.values
-        Y = target.values
+    def helper(X, Y, zscore, adjust_targets, perceptron, constrast):
         X = np.asarray(X, dtype='float32')
         Y = np.asarray(Y, dtype='float32')
 
+        if contrast:
+            print "faces.py: contrast normalization"
+            X = contrast_normalize(X)
+        
         if zscore:
             print "faces:py: make features zero mean and unit variance"
             X = z_score(X)
@@ -67,14 +69,17 @@ def faces(zscore=False, onehot=False, adjust_targets=False, perceptron=False, co
             print "faces.py: targets are [-1, 1]"
             Y[np.where(Y == 0)] = -1
 
-        if contrast:
-            print "faces.py: contrast normalization"
-            X = contrast_normalize(X)
-
         return X, Y
-
-    trX, trY = helper(tr_features, tr_target, zscore, adjust_targets, perceptron, contrast)
-    teX, teY = helper(te_features, te_target, zscore, adjust_targets, perceptron, contrast)
+   
+    # ensure that zscore is calculated in relation to all data, train + test
+    X = np.vstack((tr_features.values, te_features.values))
+    Y = np.vstack((tr_target.values, te_target.values))
+    X, Y = helper(X, Y, zscore, adjust_targets, perceptron, contrast)
+    cutoff = tr_features.values.shape[0]
+    trX = X[:cutoff]
+    trY = Y[:cutoff]
+    teX = X[cutoff:]
+    teY = Y[cutoff:]
 
     if onehot:
         trY = one_hot(trY, 2)

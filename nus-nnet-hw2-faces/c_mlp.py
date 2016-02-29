@@ -8,9 +8,11 @@ from performanceplot import performanceplot
 
 srng = RandomStreams()
 
-trX, trY, teX, teY = faces(zscore=True, onehot=False, adjust_targets=True)
+trX, trY, teX, teY = faces(zscore=False, onehot=False, adjust_targets=True, contrast=True)
 print trX.shape
 print trY.shape
+print teX.shape
+print teY.shape
 input_dim = trX.shape[1]
 
 
@@ -56,10 +58,9 @@ y_proba, h1 = model(X, w_h1, w_o, 0., 0.)
 y_pred = y_proba > 0.5
 
 # -- learning rate is coupled with batch size!
-batch_size=''; learning_rate=0.05; # batch mode: entire batch
-# batch_size=1; learning_rate=0.0005; # sequential mode: single example
-# batch_size=20; learning_rate=0.05; # minibatches good for SGD, like sequential
-# batch_size=80; learning_rate=0.001; # minibatches for adaptive learning rules
+# batch_size=''; learning_rate=0.05; epochs=100; # batch mode: entire batch
+batch_size=1; learning_rate=0.0005; epochs=35; # sequential mode: single example
+# batch_size=20; learning_rate=0.05; epochs=35;# minibatches good for SGD, like sequential
 
 cost = T.mean(T.nnet.binary_crossentropy(py_x, Y))
 params = [w_h1, w_o]
@@ -76,7 +77,7 @@ print "p_dropout", p_dropout
 cost_record = []
 tr_err_record = []
 te_err_record = []
-for i in range(100):
+for i in range(epochs):
     if isinstance(batch_size, int):
         for start, end in zip(range(0, len(trX), batch_size), range(batch_size, len(trX), batch_size)):
             cost = train(trX[start:end], trY[start:end])
@@ -97,7 +98,7 @@ if isinstance(batch_size, int):
         fig_outfile = 'perf_mlp_minibatchsize_%d.png' % batch_size
 else:
     fig_outfile = 'perf_mlp_batch.png'
-performanceplot(cost_record, tr_err_record, te_err_record, fig_outfile)
+performanceplot(cost_record, tr_err_record, te_err_record, "contrast_" + fig_outfile)
 
 H = compute_H(trX)
 _0 , svals, _1 = np.linalg.svd(H)
