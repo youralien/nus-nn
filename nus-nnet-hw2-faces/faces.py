@@ -34,36 +34,47 @@ def z_score(matrix):
         matrix[:,col] = (matrix[:,col] - mu) / sigma
     return matrix
 
-def faces(zscore=False, onehot=False, adjust_targets=False, perceptron=False):
+def contrast_normalize(matrix):
+    for row in range(matrix.shape[0]):
+        mu = np.mean(matrix[row])
+        sigma = np.std(matrix[row])
+        matrix[row] = (matrix[row] - mu) / sigma
+    return matrix
+
+def faces(zscore=False, onehot=False, adjust_targets=False, perceptron=False, contrast=False):
 
     tr_features = pd.read_csv('TrainFeats.csv', header=None)
     tr_target = pd.read_csv('TrainLabels.csv', header=None)
     te_features = pd.read_csv('TestFeats.csv', header=None)
     te_target = pd.read_csv('TestLabels.csv', header=None)
 
-    def helper(features, target, zscore, adjust_targets, perceptron):
+    def helper(features, target, zscore, adjust_targets, perceptron, constrast):
         X = features.values
         Y = target.values
+        X = np.asarray(X, dtype='float32')
+        Y = np.asarray(Y, dtype='float32')
 
         if zscore:
             print "faces:py: make features zero mean and unit variance"
-            X = np.asarray(X, dtype='float32')
             X = z_score(X)
 
         if adjust_targets:
             print "faces.py: adjusting targets to be in the sigmoid range"
-            Y = np.asarray(Y, dtype='float32')
             Y[np.where(Y == 1)] = 0.8
             Y[np.where(Y == 0)] = 0.2
 
         if perceptron:
             print "faces.py: targets are [-1, 1]"
-            Y = np.asarray(Y, dtype='int64')
             Y[np.where(Y == 0)] = -1
+
+        if contrast:
+            print "faces.py: contrast normalization"
+            X = contrast_normalize(X)
+
         return X, Y
 
-    trX, trY = helper(tr_features, tr_target, zscore, adjust_targets, perceptron)
-    teX, teY = helper(te_features, te_target, zscore, adjust_targets, perceptron)
+    trX, trY = helper(tr_features, tr_target, zscore, adjust_targets, perceptron, contrast)
+    teX, teY = helper(te_features, te_target, zscore, adjust_targets, perceptron, contrast)
 
     if onehot:
         trY = one_hot(trY, 2)
