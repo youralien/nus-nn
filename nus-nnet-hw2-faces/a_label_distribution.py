@@ -1,7 +1,9 @@
 import pandas as pd
 import numpy as np
 
-target = pd.read_csv('unnormalized_data_faces_target.csv')
+dataset = 'Train'
+# dataset = 'Test'
+target = pd.read_csv(dataset + 'Labels.csv', header=None)
 Y = target.values
 rows = Y.shape[0] 
 

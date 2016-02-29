@@ -36,30 +36,34 @@ def z_score(matrix):
 
 def faces(zscore=False, onehot=False, adjust_targets=False, perceptron=False):
 
-    features = pd.read_csv('unnormalized_data_faces.csv')
-    target = pd.read_csv('unnormalized_data_faces_target.csv')
+    tr_features = pd.read_csv('TrainFeats.csv', header=None)
+    tr_target = pd.read_csv('TrainLabels.csv', header=None)
+    te_features = pd.read_csv('TestFeats.csv', header=None)
+    te_target = pd.read_csv('TestLabels.csv', header=None)
 
-    X = features.values
-    Y = target.values
+    def helper(features, target, zscore, adjust_targets, perceptron):
+        X = features.values
+        Y = target.values
 
-    if zscore:
-        print "faces:py: make features zero mean and unit variance"
-        X = np.asarray(X, dtype='float32')
-        X = z_score(X)
+        if zscore:
+            print "faces:py: make features zero mean and unit variance"
+            X = np.asarray(X, dtype='float32')
+            X = z_score(X)
 
-    if adjust_targets:
-        print "faces.py: adjusting targets to be in the sigmoid range"
-        Y = np.asarray(Y, dtype='float32')
-        Y[np.where(Y == 1)] = 0.8
-        Y[np.where(Y == 0)] = 0.2
+        if adjust_targets:
+            print "faces.py: adjusting targets to be in the sigmoid range"
+            Y = np.asarray(Y, dtype='float32')
+            Y[np.where(Y == 1)] = 0.8
+            Y[np.where(Y == 0)] = 0.2
 
-    if perceptron:
-        print "faces.py: targets are [-1, 1]"
-        Y = np.asarray(Y, dtype='int64')
-        Y[np.where(Y == 0)] = -1
+        if perceptron:
+            print "faces.py: targets are [-1, 1]"
+            Y = np.asarray(Y, dtype='int64')
+            Y[np.where(Y == 0)] = -1
+        return X, Y
 
-
-    trX, trY, teX, teY = traintestset(X, Y)
+    trX, trY = helper(tr_features, tr_target, zscore, adjust_targets, perceptron)
+    teX, teY = helper(te_features, te_target, zscore, adjust_targets, perceptron)
 
     if onehot:
         trY = one_hot(trY, 2)
@@ -68,6 +72,7 @@ def faces(zscore=False, onehot=False, adjust_targets=False, perceptron=False):
 
 if __name__ == "__main__":
     trX, trY, teX, teY = faces(zscore=True, adjust_targets=True)
+    print trX.shape, trY.shape, teX.shape, teY.shape
     xcol = trX[:,np.random.randint(trX.shape[1])]
     print "X min: {}, X max: {}, X mean: {}, X variance: {}".format(xcol.min(), xcol.max(), xcol.mean(), xcol.std()**2)
     print "Y min: {}, Y max: {}".format(trY.min(), trY.max())
