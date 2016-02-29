@@ -12,9 +12,9 @@ side_length = 101;
 shape = size(labelList);
 n_examples = shape(1);
 n_features = side_length^2;
-Y = zeros(n_examples);
+Y = zeros(n_examples, 1);
 X = zeros(n_examples, n_features);
-
+cp1 = 1
 for count=1:n_examples
     labelFn = char(labelList(count));
     imageFn = char(imageList(count));
@@ -28,6 +28,6 @@ for count=1:n_examples
     X(count,:) = im(:); % flatten
     
 end
-
+cp2 = 1
 csvwrite([split, 'Feats.csv'], X)
 csvwrite([split, 'Labels.csv'], Y)
