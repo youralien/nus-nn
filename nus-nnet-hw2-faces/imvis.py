@@ -5,7 +5,7 @@ import numpy as np
 
 def make2D(vector, size=(101, 101)):
     print vector.shape
-    return vector.reshape(size)
+    return vector.reshape(size).T
 
 def save_example_face(vector, fig_outfile):
     im = make2D(vector)
@@ -16,4 +16,4 @@ def save_example_face(vector, fig_outfile):
 if __name__ == "__main__":
     from faces import faces
     trX, trY, teX, teY = faces(contrast=True)
-    save_example_face(teX[0], 'example_face_normalized.png')
+    save_example_face(teX[0], 'example_face_contrast.png')
