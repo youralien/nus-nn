@@ -8,7 +8,7 @@ from performanceplot import performanceplot
 
 srng = RandomStreams()
 
-trX, trY, teX, teY = faces(zscore=True, perceptron=True)
+trX, trY, teX, teY = faces(contrast=True, perceptron=True)
 print "target values (min, max): ", (teY.min(), teY.max())
 print trX.shape
 print trY.shape
@@ -64,4 +64,4 @@ for epoch in range(100):
         print "%d,%0.4f,%0.4f" % (epoch, train_error, test_error)
         trX, trY = permute(trX, trY)
 
-performanceplot(cost_record, train_error_record, test_error_record, 'perf_perceptron.png')
+performanceplot(cost_record, train_error_record, test_error_record, 'contrast_perf_perceptron.png')
