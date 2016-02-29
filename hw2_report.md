@@ -217,6 +217,8 @@ And the rest of the code which trained the networks and plotted their fitting re
     end
 
 ## Q3: a)
+Since the last number of my ID equals 3, I will be working with the Gender Classification task.
+
 ## Q3: b)
 ## Q3: c)
 ## Q3: d)
