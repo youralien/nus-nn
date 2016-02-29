@@ -4,6 +4,7 @@ from theano import tensor as T
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 from sklearn.metrics import accuracy_score
 from faces import faces, permute
+from performanceplot import performanceplot
 
 srng = RandomStreams()
 
@@ -45,12 +46,22 @@ predict = theano.function(inputs=[X], outputs=y_pred, allow_input_downcast=True)
 print "batch_size: ", batch_size
 print "learning_rate: ", learning_rate
 
+cost_record = []
+train_error_record = []
+test_error_record = []
 for epoch in range(100):
     if isinstance(batch_size, int):
         for start, end in zip(range(0, len(trX), batch_size), range(batch_size, len(trX), batch_size)):
             cost = train(trX[start:end], trY[start:end])
     else:
         cost = train(trX, trY)
+    cost_record.append(cost)
     if epoch % 1 == 0:
-        print "%d,%0.4f,%0.4f" % (epoch, 1-np.mean(np.sign(trY)== predict(trX)), 1-np.mean(np.sign(teY)== predict(teX)))
+        train_error = 1-np.mean(np.sign(trY)== predict(trX))
+        test_error = 1-np.mean(np.sign(teY)== predict(teX))
+        train_error_record.append(train_error)
+        test_error_record.append(test_error)
+        print "%d,%0.4f,%0.4f" % (epoch, train_error, test_error)
         trX, trY = permute(trX, trY)
+
+performanceplot(cost_record, train_error_record, test_error_record, 'perf_perceptron.png')

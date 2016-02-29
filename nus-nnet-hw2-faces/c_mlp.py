@@ -4,6 +4,7 @@ from theano import tensor as T
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 from sklearn.metrics import accuracy_score
 from faces import faces, permute
+from performanceplot import performanceplot
 
 srng = RandomStreams()
 
@@ -55,8 +56,8 @@ y_proba, h1 = model(X, w_h1, w_o, 0., 0.)
 y_pred = y_proba > 0.5
 
 # -- learning rate is coupled with batch size!
-# batch_size=''; learning_rate=0.05; # batch mode: entire batch
-batch_size=1; learning_rate=0.0005; # sequential mode: single example
+batch_size=''; learning_rate=0.05; # batch mode: entire batch
+# batch_size=1; learning_rate=0.0005; # sequential mode: single example
 # batch_size=20; learning_rate=0.05; # minibatches good for SGD, like sequential
 # batch_size=80; learning_rate=0.001; # minibatches for adaptive learning rules
 
@@ -72,15 +73,32 @@ print "batch_size: ", batch_size
 print "learning_rate: ", learning_rate
 print "p_dropout", p_dropout
 
+cost_record = []
+tr_err_record = []
+te_err_record = []
 for i in range(100):
     if isinstance(batch_size, int):
         for start, end in zip(range(0, len(trX), batch_size), range(batch_size, len(trX), batch_size)):
             cost = train(trX[start:end], trY[start:end])
     else:
         cost = train(trX, trY)
-    if i % 10 == 0:
-        print "%d,%0.4f,%0.4f" % (i, 1-np.mean((trY > 0.5) == predict(trX)), 1-np.mean((teY > 0.5) == predict(teX)))
-        trX, trY = permute(trX, trY)
+    cost_record.append(cost)
+    tr_err = 1-np.mean((trY > 0.5) == predict(trX))
+    te_err = 1-np.mean((teY > 0.5) == predict(teX))
+    tr_err_record.append(tr_err)
+    te_err_record.append(te_err)
+    print "%d,%0.4f,%0.4f" % (i, tr_err, te_err)
+    trX, trY = permute(trX, trY)
+
+if isinstance(batch_size, int):
+    if batch_size == 1:
+        fig_outfile = 'perf_mlp_seque.png'
+    else:
+        fig_outfile = 'perf_mlp_minibatchsize_%d.png' % batch_size
+else:
+    fig_outfile = 'perf_mlp_batch.png'
+performanceplot(cost_record, tr_err_record, te_err_record, fig_outfile)
+
 H = compute_H(trX)
 _0 , svals, _1 = np.linalg.svd(H)
 
