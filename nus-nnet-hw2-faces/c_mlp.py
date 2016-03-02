@@ -5,6 +5,7 @@ from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 from sklearn.metrics import accuracy_score
 from faces import faces, permute
 from performanceplot import performanceplot
+import failure_analysis
 
 srng = RandomStreams()
 
@@ -99,6 +100,7 @@ if isinstance(batch_size, int):
 else:
     fig_outfile = 'perf_mlp_batch.png'
 performanceplot(cost_record, tr_err_record, te_err_record, "contrast_" + fig_outfile)
+failure_analysis.investigate_mlp(teX, teY, predict(teX) > 0.5)
 
 H = compute_H(trX)
 _0 , svals, _1 = np.linalg.svd(H)
