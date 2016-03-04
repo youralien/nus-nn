@@ -10,7 +10,7 @@ def init_weights(shape):
 def idx1D_to_idx2D(idx, shape):
     n_rows, n_cols = shape
 
-    ith_row = idx / n_cols
+    ith_row = idx / n_cols # integer division
     jth_col = idx % n_cols
 
     return (ith_row, jth_col)
@@ -20,10 +20,6 @@ def test_idx1D_to_idx2D():
     assert idx1D_to_idx2D(1, (3,3)) == (0, 1)
     assert idx1D_to_idx2D(7, (3,3)) == (2, 1)
 # test_idx1D_to_idx2D()
-
-def model(X, w_h):
-    lattice = (X, w_h)
-    return lattice
 
 # trX, teX, trY, teY = mnist(onehot=True)
 
@@ -42,9 +38,9 @@ Y = np.random.randn(1,8)
 
 map_shape = (5, 4)
 map_size = map_shape[0] * map_shape[1]
-w_h = init_weights((784, map_size))
+w = init_weights((784, map_size))
 
-distances = cdist(X, w_h.T, 'euclidean')
+distances = cdist(X, w.T, 'euclidean')
 print distances.shape
 print distances
 
@@ -68,7 +64,7 @@ def time_varying_sigma(n, sigma_0, tau):
     sigma = sigma_0 * np.exp(-n / float(tau))
     return sigma
 
-def time_varying_neighborhood_function(d, n, sigma_0=1, tau=1):
+def time_varying_neighborhood_function(d, n, sigma_0, tau):
     """
     d: distance from neighbor
     n: iteration. n=0 is the start of time
@@ -76,18 +72,55 @@ def time_varying_neighborhood_function(d, n, sigma_0=1, tau=1):
     h = np.exp( d**2 / 2.*time_varying_sigma(n, sigma_0, tau) )
     return h
 
-n = 0
+def learningRate(n, lr_0, n_iter_first_phase):
+    return lr_0 * np.exp( -n / float(n_iter_first_phase) )
+
+def init_neighborhood_size(map_shape):
+    m, n = map_shape
+    sigma_0 = np.sqrt(m**2 + n**2) / 2.
+    return sigma_0
+
+def init_timeconstant(n_iter_first_phase, sigma_0):
+    return float(n_iter_first_phase) / np.log(sigma_0)
+
+n_iter_first_phase = 1000;
+sigma_0 = init_neighborhood_size(map_shape)
+tau = init_timeconstant(n_iter_first_phase, sigma_0)
+lr_0 = 0.1
+
+n = 1000
+lr = learningRate(n, lr_0, n_iter_first_phase)
 hs = np.array(
-        [time_varying_neighborhood_function(d, n)
+        [time_varying_neighborhood_function(d, n, sigma_0, tau=tau)
             for d in map_distances]
      )
 
 print "hs: \n", hs.reshape(map_shape)
-# py_x = model(X, w_h)
+print "(n, lr, sigma(n)): ", (n, lr, time_varying_sigma(n, sigma_0, tau))
+
+print "w.shape", w.shape
+print "hs.shape", hs.shape
+print "X.shape", X.shape
+
+# w.shape (784, 20)
+# hs.shape (1, 20)
+# X.shape (1, 784)
+
+w_new = w.copy()
+w_new1 = w.copy()
+
+w_new = w + lr*hs*(np.tile(X, (map_size,1)).T - w) # vectorized
+
+# readable for loop
+for neuron_idx in range(map_size):
+    w_new1[:,neuron_idx] = w[:,neuron_idx] + lr*hs[:,neuron_idx]*(X - w[:,neuron_idx])  
+print "w_new.shape", w_new.shape
+assert( w_new.all() == w_new1.all() )
+# py_x = model(X, w)
 # y_x = T.argmax(py_x, axis=1)
 
 # cost = T.mean(T.nnet.categorical_crossentropy(py_x, Y))
-# params = [w_h, w_o]
+# params = [w, w_o]
 # updates = sgd(cost, params)
 
 # train = theano.function(inputs=[X, Y], outputs=cost, updates=updates, allow_input_downcast=True)
