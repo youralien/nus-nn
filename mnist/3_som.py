@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 from load import mnist
 # from foxhound.utils.vis import grayscale_grid_vis, unit_scale
 from scipy.misc import imsave
@@ -33,8 +34,8 @@ def time_varying_neighborhood_function(d, n, sigma_0, tau):
     h = np.exp( d**2 / 2.*time_varying_sigma(n, sigma_0, tau) )
     return h
 
-def learningRate(n, lr_0, n_iter_first_phase, lr_min=0.01):
-    lr = lr_0 * np.exp( -n / float(n_iter_first_phase) )
+def learningRate(n, lr_0, n_epochs_organizing_phase, lr_min=0.01):
+    lr = lr_0 * np.exp( -n / float(n_epochs_organizing_phase) )
 
     if lr < lr_min:
         return lr_min
@@ -46,8 +47,8 @@ def init_neighborhood_size(map_shape):
     sigma_0 = np.sqrt(m**2 + n**2) / 2.
     return sigma_0
 
-def init_timeconstant(n_iter_first_phase, sigma_0):
-    return float(n_iter_first_phase) / np.log(sigma_0)
+def init_timeconstant(n_epochs_organizing_phase, sigma_0):
+    return float(n_epochs_organizing_phase) / np.log(sigma_0)
 
 trX, teX, trY, teY = mnist(onehot=True)
 
@@ -68,44 +69,50 @@ map_shape = (5, 4)
 map_size = map_shape[0] * map_shape[1]
 w = init_weights((784, map_size))
 
-n_iter_first_phase = 1000;
+n_epochs_organizing_phase = 1000;
 sigma_0 = init_neighborhood_size(map_shape)
-tau = init_timeconstant(n_iter_first_phase, sigma_0)
+tau = init_timeconstant(n_epochs_organizing_phase, sigma_0)
 lr_0 = 0.1
 
-for n in range(n_iter_first_phase):
+# organizing phase
+verbose = False
+for n in range(n_epochs_organizing_phase):
     # MNIST
-    x = trX[n % trX.shape[0]].reshape(1, -1)
-    distances = cdist(x, w.T, 'euclidean')
-    print distances.shape
-    print "distances: \n", distances
+    n_examples = trX.shape[0]
+    for sequential_learning_idx in range(n_examples):
+        sys.stdout.write("\rExamples Seen: %d" % sequential_learning_idx)
+        x = trX[sequential_learning_idx].reshape(1, -1)
+        distances = cdist(x, w.T, 'euclidean')
+        winner_idx = np.argmin(distances)
+        winner_i, winner_j = idx1D_to_idx2D(winner_idx, map_shape)
 
-    winner_idx = np.argmin(distances)
-    winner_i, winner_j = idx1D_to_idx2D(winner_idx, map_shape)
-    print "winner: ", winner_i, winner_j
+        neighbors = []
+        for count in range(map_size):
+            neighbors.append(idx1D_to_idx2D(count, map_shape))
+        neighbors = np.vstack(neighbors)
 
-    neighbors = []
-    for count in range(map_size):
-        neighbors.append(idx1D_to_idx2D(count, map_shape))
-    neighbors = np.vstack(neighbors)
-    print "neighbors: \n", neighbors
+        winner_idx2D_vector = np.array((winner_i, winner_j)).reshape(1, -1)
+        map_distances = cdist(winner_idx2D_vector, neighbors)
 
-    winner_idx2D_vector = np.array((winner_i, winner_j)).reshape(1, -1)
-    map_distances = cdist(winner_idx2D_vector, neighbors)
-    print "map_distances: \n", map_distances.reshape(map_shape)
+        lr = learningRate(n, lr_0, n_epochs_organizing_phase)
+        hs = np.array(
+                [time_varying_neighborhood_function(d, n, sigma_0, tau=tau)
+                    for d in map_distances]
+             )
+        
+        # -- weight update
+        # w_new = w + lr*hs*(np.tile(x, (map_size,1)).T - w) # vectorized
+        # readable for loop
+        for neuron_idx in range(map_size):
+            w[:,neuron_idx] = w[:,neuron_idx] + lr*hs[:,neuron_idx]*(x - w[:,neuron_idx])  
+        if verbose:
+            print "distances: \n", distances
+            print "winner: ", winner_i, winner_j
+            print "neighbors: \n", neighbors
+            print "map_distances: \n", map_distances.reshape(map_shape)
 
-    lr = learningRate(n, lr_0, n_iter_first_phase)
-    hs = np.array(
-            [time_varying_neighborhood_function(d, n, sigma_0, tau=tau)
-                for d in map_distances]
-         )
-    
-    # -- weight update
-    # w_new = w + lr*hs*(np.tile(x, (map_size,1)).T - w) # vectorized
-    # readable for loop
-    for neuron_idx in range(map_size):
-        w[:,neuron_idx] = w[:,neuron_idx] + lr*hs[:,neuron_idx]*(x - w[:,neuron_idx])  
-
+        sys.stdout.flush()
+    raw_input("continue epoch %d?" % (n+1))
 
 # py_x = model(X, w)
 # y_x = T.argmax(py_x, axis=1)
