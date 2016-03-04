@@ -21,45 +21,6 @@ def test_idx1D_to_idx2D():
     assert idx1D_to_idx2D(7, (3,3)) == (2, 1)
 # test_idx1D_to_idx2D()
 
-# trX, teX, trY, teY = mnist(onehot=True)
-
-# if raw_input('remove_classes 3 and 4? (y/n)') == 'y':
-#     trY = np.column_stack((trY[:,:3], trY[:,5:]))
-#     teY = np.column_stack((teY[:,:3], teY[:,5:]))
-#     assert teY.shape[1] == 8
-#     assert trY.shape[1] == 8
-#     n_classes = 8
-# else:
-#     assert teY.shape[1] == 10
-#     n_classes = 10
-
-X = np.random.randn(1,784)
-Y = np.random.randn(1,8)
-
-map_shape = (5, 4)
-map_size = map_shape[0] * map_shape[1]
-w = init_weights((784, map_size))
-
-distances = cdist(X, w.T, 'euclidean')
-print distances.shape
-print distances
-
-winner_idx = np.argmin(distances)
-winner_i, winner_j = idx1D_to_idx2D(winner_idx, map_shape)
-print "winner: ", winner_i, winner_j
-
-neighbors = []
-for count in range(map_size):
-    neighbors.append(idx1D_to_idx2D(count, map_shape))
-print neighbors
-neighbors = np.vstack(neighbors)
-print neighbors
-print neighbors.shape
-
-winner_idx2D_vector = np.array((winner_i, winner_j)).reshape(1, -1)
-map_distances = cdist(winner_idx2D_vector, neighbors)
-print map_distances.reshape(map_shape)
-
 def time_varying_sigma(n, sigma_0, tau):
     sigma = sigma_0 * np.exp(-n / float(tau))
     return sigma
@@ -72,8 +33,13 @@ def time_varying_neighborhood_function(d, n, sigma_0, tau):
     h = np.exp( d**2 / 2.*time_varying_sigma(n, sigma_0, tau) )
     return h
 
-def learningRate(n, lr_0, n_iter_first_phase):
-    return lr_0 * np.exp( -n / float(n_iter_first_phase) )
+def learningRate(n, lr_0, n_iter_first_phase, lr_min=0.01):
+    lr = lr_0 * np.exp( -n / float(n_iter_first_phase) )
+
+    if lr < lr_min:
+        return lr_min
+    else:
+        return lr
 
 def init_neighborhood_size(map_shape):
     m, n = map_shape
@@ -83,39 +49,64 @@ def init_neighborhood_size(map_shape):
 def init_timeconstant(n_iter_first_phase, sigma_0):
     return float(n_iter_first_phase) / np.log(sigma_0)
 
+trX, teX, trY, teY = mnist(onehot=True)
+
+if raw_input('remove_classes 3 and 4? (y/n)') == 'y':
+    trY = np.column_stack((trY[:,:3], trY[:,5:]))
+    teY = np.column_stack((teY[:,:3], teY[:,5:]))
+    assert teY.shape[1] == 8
+    assert trY.shape[1] == 8
+    n_classes = 8
+else:
+    assert teY.shape[1] == 10
+    n_classes = 10
+
+# X = np.random.randn(1,784)
+# Y = np.random.randn(1,8)
+
+map_shape = (5, 4)
+map_size = map_shape[0] * map_shape[1]
+w = init_weights((784, map_size))
+
 n_iter_first_phase = 1000;
 sigma_0 = init_neighborhood_size(map_shape)
 tau = init_timeconstant(n_iter_first_phase, sigma_0)
 lr_0 = 0.1
 
-n = 1000
-lr = learningRate(n, lr_0, n_iter_first_phase)
-hs = np.array(
-        [time_varying_neighborhood_function(d, n, sigma_0, tau=tau)
-            for d in map_distances]
-     )
+for n in range(n_iter_first_phase):
+    # MNIST
+    x = trX[n % trX.shape[0]].reshape(1, -1)
+    distances = cdist(x, w.T, 'euclidean')
+    print distances.shape
+    print "distances: \n", distances
 
-print "hs: \n", hs.reshape(map_shape)
-print "(n, lr, sigma(n)): ", (n, lr, time_varying_sigma(n, sigma_0, tau))
+    winner_idx = np.argmin(distances)
+    winner_i, winner_j = idx1D_to_idx2D(winner_idx, map_shape)
+    print "winner: ", winner_i, winner_j
 
-print "w.shape", w.shape
-print "hs.shape", hs.shape
-print "X.shape", X.shape
+    neighbors = []
+    for count in range(map_size):
+        neighbors.append(idx1D_to_idx2D(count, map_shape))
+    neighbors = np.vstack(neighbors)
+    print "neighbors: \n", neighbors
 
-# w.shape (784, 20)
-# hs.shape (1, 20)
-# X.shape (1, 784)
+    winner_idx2D_vector = np.array((winner_i, winner_j)).reshape(1, -1)
+    map_distances = cdist(winner_idx2D_vector, neighbors)
+    print "map_distances: \n", map_distances.reshape(map_shape)
 
-w_new = w.copy()
-w_new1 = w.copy()
+    lr = learningRate(n, lr_0, n_iter_first_phase)
+    hs = np.array(
+            [time_varying_neighborhood_function(d, n, sigma_0, tau=tau)
+                for d in map_distances]
+         )
+    
+    # -- weight update
+    # w_new = w + lr*hs*(np.tile(x, (map_size,1)).T - w) # vectorized
+    # readable for loop
+    for neuron_idx in range(map_size):
+        w[:,neuron_idx] = w[:,neuron_idx] + lr*hs[:,neuron_idx]*(x - w[:,neuron_idx])  
 
-w_new = w + lr*hs*(np.tile(X, (map_size,1)).T - w) # vectorized
 
-# readable for loop
-for neuron_idx in range(map_size):
-    w_new1[:,neuron_idx] = w[:,neuron_idx] + lr*hs[:,neuron_idx]*(X - w[:,neuron_idx])  
-print "w_new.shape", w_new.shape
-assert( w_new.all() == w_new1.all() )
 # py_x = model(X, w)
 # y_x = T.argmax(py_x, axis=1)
 
