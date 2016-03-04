@@ -1,7 +1,7 @@
 import numpy as np
 import os
 
-datasets_dir = '~/repos/Theano-Tutorials/'
+datasets_dir = '/home/ryan/repos/Theano-Tutorials/'
 
 def one_hot(x,n):
     if type(x) == list:
