@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
+import time
 from load import mnist
 from scipy.spatial.distance import cdist
 from idash import IDash
@@ -75,58 +76,65 @@ if n_weight_plots > 0:
         n = np.random.randint(0, w.shape[1])
         random_weight_idxs.append((m,n))
 
-n_epochs_organizing_phase = 60000;
+n_epochs_organizing_phase = 1000;
 sigma_0 = init_neighborhood_size(map_shape)
 tau = init_timeconstant(n_epochs_organizing_phase, sigma_0)
 lr_0 = 0.1
+batch_size = 100
 
 # weight trajectories
 weight_history = np.zeros((n_weight_plots, n_epochs_organizing_phase))
 lr_history = np.zeros(n_epochs_organizing_phase)
 
+# precalculate neighbor distances
+neighbors = []
+for count in range(map_size):
+    neighbors.append(idx1D_to_idx2D(count, map_shape))
+neighbors = np.vstack(neighbors)
+
+# precalculate distances between points
+map_distances_all_combos = cdist(neighbors, neighbors)
+
 # organizing phase
 verbose = False
-for n in range(n_epochs_organizing_phase):
+t0 = time.time()
+for epoch in range(n_epochs_organizing_phase):
     # MNIST
-    example_index = np.random.randint(0, trX.shape[0])
-    sys.stdout.write("\rExamples Seen: %d" % n)
-    x = trX[example_index].reshape(1, -1)
-    distances = cdist(x, w.T, 'euclidean')
-    winner_idx = np.argmin(distances)
-    winner_i, winner_j = idx1D_to_idx2D(winner_idx, map_shape)
+    for batch_i in range(batch_size):
+        example_index = np.random.randint(0, trX.shape[0])
+        sys.stdout.write("\rEpoch: %d | Examples Seen: %d" % (epoch, batch_size*epoch + batch_i))
+        x = trX[example_index].reshape(1, -1)
+        distances = cdist(x, w.T, 'euclidean')
+        winner_idx = np.argmin(distances)
 
-    neighbors = []
-    for count in range(map_size):
-        neighbors.append(idx1D_to_idx2D(count, map_shape))
-    neighbors = np.vstack(neighbors)
+        # get map distances for this winner from cached distances
+        map_distances = map_distances_all_combos[winner_idx]
 
-    winner_idx2D_vector = np.array((winner_i, winner_j)).reshape(1, -1)
-    map_distances = cdist(winner_idx2D_vector, neighbors)
+        lr = learningRate(epoch, lr_0, n_epochs_organizing_phase)
+        hs = np.array(
+                [time_varying_neighborhood_function(d, epoch, sigma_0, tau=tau)
+                    for d in map_distances]
+             )
 
-    lr = learningRate(n, lr_0, n_epochs_organizing_phase)
-    hs = np.array(
-            [time_varying_neighborhood_function(d, n, sigma_0, tau=tau)
-                for d in map_distances]
-         )
+        # -- weight update
+        w_new = w + lr*hs*(np.tile(x, (map_size,1)).T - w) # vectorized
+        # readable for loop
+        # for neuron_idx in range(map_size):
+        #     w[:,neuron_idx] = w[:,neuron_idx] + lr*hs[:,neuron_idx]*(x - w[:,neuron_idx])
+        if verbose:
+            print "distances: \n", distances
+            print "winner: ", winner_idx
+            print "neighbors: \n", neighbors
+            print "map_distances: \n", map_distances.reshape(map_shape)
 
-    # -- weight update
-    w_new = w + lr*hs*(np.tile(x, (map_size,1)).T - w) # vectorized
-    # readable for loop
-#        for neuron_idx in range(map_size):
-#            w[:,neuron_idx] = w[:,neuron_idx] + lr*hs[:,neuron_idx]*(x - w[:,neuron_idx])
-    if verbose:
-        print "distances: \n", distances
-        print "winner: ", winner_i, winner_j
-        print "neighbors: \n", neighbors
-        print "map_distances: \n", map_distances.reshape(map_shape)
+        # track history
+        for count, (m_row, n_col) in enumerate(random_weight_idxs):
+            weight_history[count, epoch] = w[m_row, n_col]
+        lr_history[epoch] = lr
 
-    # track history
-    for count, (m_row, n_col) in enumerate(random_weight_idxs):
-        weight_history[count, n] = w[m_row, n_col]
-    lr_history[n] = lr
+        sys.stdout.flush()
 
-    sys.stdout.flush()
-
+print "\n", time.time() - t0
 #SOM visualization of MNIST digits
 image_template = np.zeros((28,28))
 map_image = np.tile(image_template, map_shape)
@@ -140,9 +148,9 @@ dash.add(lambda: plt.imshow(map_image, cmap='gray'))
 
 # FIXME; using lambdas will not remember the different m_row, n_col pairs
 #for count, (m_row,n_col) in enumerate(random_weight_idxs):
-#    weight_history[count, n] = w[m_row,n_col]
+#    weight_history[count, epoch] = w[m_row,n_col]
 #    dash.add(lambda:
-#        plt.plot(weight_history[count, :n])
+#        plt.plot(weight_history[count, :epoch+1])
 #    and plt.title("m: %d n: %d" % (m_row, n_col))
 #    )
 
