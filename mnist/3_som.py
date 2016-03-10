@@ -55,15 +55,17 @@ trX, teX, trY, teY = mnist(ntrain=60000, ntest=10000, onehot=False)
 xmin_val = trX[0].min()
 xmax_val = trX[0].max()
 
+def remove_threes_and_fours(X, Y):
+    """ Y: array-like, shape (n_examples,) """
+    three_idxs = np.where(Y == 3)
+    four_idxs = np.where(Y == 4)
+    ia = np.indices(Y.shape)
+    remaining_idxs = np.setxor1d(ia, np.concatenate((three_idxs[0], four_idxs[0])))
+    return X[remaining_idxs], Y[remaining_idxs]
+
 if raw_input('remove_classes 3 and 4? (y/n)') == 'y':
-    trY = np.column_stack((trY[:,:3], trY[:,5:]))
-    teY = np.column_stack((teY[:,:3], teY[:,5:]))
-    assert teY.shape[1] == 8
-    assert trY.shape[1] == 8
-    n_classes = 8
-else:
-    assert teY.shape[1] == 10
-    n_classes = 10
+    trX, trY = remove_threes_and_fours(trX, trY)
+    teX, teY = remove_threes_and_fours(teX, teY)
 
 map_shape = (10, 10)
 map_size = map_shape[0] * map_shape[1]
@@ -77,11 +79,11 @@ if n_weight_plots > 0:
         n = np.random.randint(0, w.shape[1])
         random_weight_idxs.append((m,n))
 
-n_epochs_organizing_phase = 1000;
+n_epochs_organizing_phase = 5000;
 sigma_0 = init_neighborhood_size(map_shape)
 tau = init_timeconstant(n_epochs_organizing_phase, sigma_0)
 lr_0 = 0.1
-batch_size = 10
+batch_size = 1
 
 # weight trajectories
 weight_history = np.zeros((n_weight_plots, n_epochs_organizing_phase))
@@ -116,7 +118,7 @@ for epoch in range(n_epochs_organizing_phase):
                 [time_varying_neighborhood_function(d, epoch, sigma_0, tau=tau)
                     for d in map_distances]
              )
-        
+
         # -- weight update
         w = w + lr*hs*(np.tile(x, (map_size,1)).T - w) # vectorized
         # readable for loop
@@ -133,7 +135,7 @@ for epoch in range(n_epochs_organizing_phase):
             weight_history[count, epoch] = w[m_row, n_col]
         lr_history[epoch] = lr
 
-        #dash.add(lambda: plt.imshow(hs.reshape(map_shape)))        
+        #dash.add(lambda: plt.imshow(hs.reshape(map_shape)))
         #dash.plotframe()
         sys.stdout.flush()
 
@@ -171,4 +173,6 @@ teYpred = predict(teX, w, lattice_predictions)
 train_acc = accuracy_score(trY, trYpred)
 test_acc = accuracy_score(teY, teYpred)
 
+dash.add(lambda: plt.plot(lr_history) and plt.ylabel('lr'))
+dash.add(lambda: plt.imshow(hs.reshape(map_shape)) and plt.title('Neighborhood Final'))
 dash.plotframe()
