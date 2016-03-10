@@ -1,7 +1,11 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import sys
 from load import mnist
 from scipy.spatial.distance import cdist
+from idash import IDash
+
+dash = IDash(framerate=0.01)
 
 def idx1D_to_idx2D(idx, shape):
     n_rows, n_cols = shape
@@ -45,7 +49,7 @@ def init_neighborhood_size(map_shape):
 def init_timeconstant(n_epochs_organizing_phase, sigma_0):
     return float(n_epochs_organizing_phase) / np.log(sigma_0)
 
-trX, teX, trY, teY = mnist(ntrain=2000, ntest=1000, onehot=True)
+trX, teX, trY, teY = mnist(ntrain=60000, ntest=1000, onehot=True)
 xmin_val = trX[0].min()
 xmax_val = trX[0].max()
 
@@ -59,52 +63,90 @@ else:
     assert teY.shape[1] == 10
     n_classes = 10
 
-map_shape = (5, 4)
+map_shape = (10, 10)
 map_size = map_shape[0] * map_shape[1]
 w = np.random.uniform(xmin_val, xmax_val, (784, map_size))
 
-n_epochs_organizing_phase = 1000;
+n_weight_plots = int(raw_input('How many random weights to track? (max of 16):'))
+random_weight_idxs = []
+if n_weight_plots > 0:
+    for count in range(n_weight_plots):
+        m = np.random.randint(0, w.shape[0])
+        n = np.random.randint(0, w.shape[1])
+        random_weight_idxs.append((m,n))
+
+n_epochs_organizing_phase = 60000;
 sigma_0 = init_neighborhood_size(map_shape)
 tau = init_timeconstant(n_epochs_organizing_phase, sigma_0)
 lr_0 = 0.1
+
+# weight trajectories
+weight_history = np.zeros((n_weight_plots, n_epochs_organizing_phase))
+lr_history = np.zeros(n_epochs_organizing_phase)
 
 # organizing phase
 verbose = False
 for n in range(n_epochs_organizing_phase):
     # MNIST
-    n_examples = trX.shape[0]
-    for sequential_learning_idx in range(n_examples):
-        sys.stdout.write("\rExamples Seen: %d" % sequential_learning_idx)
-        x = trX[sequential_learning_idx].reshape(1, -1)
-        distances = cdist(x, w.T, 'euclidean')
-        winner_idx = np.argmin(distances)
-        winner_i, winner_j = idx1D_to_idx2D(winner_idx, map_shape)
+    example_index = np.random.randint(0, trX.shape[0])
+    sys.stdout.write("\rExamples Seen: %d" % n)
+    x = trX[example_index].reshape(1, -1)
+    distances = cdist(x, w.T, 'euclidean')
+    winner_idx = np.argmin(distances)
+    winner_i, winner_j = idx1D_to_idx2D(winner_idx, map_shape)
 
-        neighbors = []
-        for count in range(map_size):
-            neighbors.append(idx1D_to_idx2D(count, map_shape))
-        neighbors = np.vstack(neighbors)
+    neighbors = []
+    for count in range(map_size):
+        neighbors.append(idx1D_to_idx2D(count, map_shape))
+    neighbors = np.vstack(neighbors)
 
-        winner_idx2D_vector = np.array((winner_i, winner_j)).reshape(1, -1)
-        map_distances = cdist(winner_idx2D_vector, neighbors)
+    winner_idx2D_vector = np.array((winner_i, winner_j)).reshape(1, -1)
+    map_distances = cdist(winner_idx2D_vector, neighbors)
 
-        lr = learningRate(n, lr_0, n_epochs_organizing_phase)
-        hs = np.array(
-                [time_varying_neighborhood_function(d, n, sigma_0, tau=tau)
-                    for d in map_distances]
-             )
-        
-        # -- weight update
-        # w_new = w + lr*hs*(np.tile(x, (map_size,1)).T - w) # vectorized
-        # readable for loop
-        for neuron_idx in range(map_size):
-            w[:,neuron_idx] = w[:,neuron_idx] + lr*hs[:,neuron_idx]*(x - w[:,neuron_idx])  
-        if verbose:
-            print "distances: \n", distances
-            print "winner: ", winner_i, winner_j
-            print "neighbors: \n", neighbors
-            print "map_distances: \n", map_distances.reshape(map_shape)
-        
+    lr = learningRate(n, lr_0, n_epochs_organizing_phase)
+    hs = np.array(
+            [time_varying_neighborhood_function(d, n, sigma_0, tau=tau)
+                for d in map_distances]
+         )
 
-        sys.stdout.flush()
-    raw_input("continue epoch %d?" % (n+1))
+    # -- weight update
+    w_new = w + lr*hs*(np.tile(x, (map_size,1)).T - w) # vectorized
+    # readable for loop
+#        for neuron_idx in range(map_size):
+#            w[:,neuron_idx] = w[:,neuron_idx] + lr*hs[:,neuron_idx]*(x - w[:,neuron_idx])
+    if verbose:
+        print "distances: \n", distances
+        print "winner: ", winner_i, winner_j
+        print "neighbors: \n", neighbors
+        print "map_distances: \n", map_distances.reshape(map_shape)
+
+    # track history
+    for count, (m_row, n_col) in enumerate(random_weight_idxs):
+        weight_history[count, n] = w[m_row, n_col]
+    lr_history[n] = lr
+
+    sys.stdout.flush()
+
+#SOM visualization of MNIST digits
+image_template = np.zeros((28,28))
+map_image = np.tile(image_template, map_shape)
+for node_count in range(map_size):
+    m_row, n_col = idx1D_to_idx2D(node_count, map_shape)
+    closest_x_idx = np.argmin(cdist(w[:,node_count].reshape(1, -1), trX))
+    image_of_closest_x = trX[closest_x_idx].reshape((28,28))
+    map_image[m_row*28:(m_row+1)*28, n_col*28:(n_col+1)*28] = image_of_closest_x
+
+dash.add(lambda: plt.imshow(map_image, cmap='gray'))
+
+# FIXME; using lambdas will not remember the different m_row, n_col pairs
+#for count, (m_row,n_col) in enumerate(random_weight_idxs):
+#    weight_history[count, n] = w[m_row,n_col]
+#    dash.add(lambda:
+#        plt.plot(weight_history[count, :n])
+#    and plt.title("m: %d n: %d" % (m_row, n_col))
+#    )
+
+dash.add(lambda:
+    plt.plot(lr_history)
+and plt.title('Learning Rate over Time'))
+dash.plotframe()
