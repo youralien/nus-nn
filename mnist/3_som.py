@@ -80,7 +80,7 @@ n_epochs_organizing_phase = 1000;
 sigma_0 = init_neighborhood_size(map_shape)
 tau = init_timeconstant(n_epochs_organizing_phase, sigma_0)
 lr_0 = 0.1
-batch_size = 1
+batch_size = 10
 
 # weight trajectories
 weight_history = np.zeros((n_weight_plots, n_epochs_organizing_phase))
@@ -115,7 +115,7 @@ for epoch in range(n_epochs_organizing_phase):
                 [time_varying_neighborhood_function(d, epoch, sigma_0, tau=tau)
                     for d in map_distances]
              )
-        dash.add(lambda: plt.imshow(hs.reshape(map_shape)))
+        
         # -- weight update
         w = w + lr*hs*(np.tile(x, (map_size,1)).T - w) # vectorized
         # readable for loop
@@ -131,11 +131,13 @@ for epoch in range(n_epochs_organizing_phase):
         for count, (m_row, n_col) in enumerate(random_weight_idxs):
             weight_history[count, epoch] = w[m_row, n_col]
         lr_history[epoch] = lr
-        dash.plotframe()
+
+        #dash.add(lambda: plt.imshow(hs.reshape(map_shape)))        
+        #dash.plotframe()
         sys.stdout.flush()
 
 print "\n", time.time() - t0
-"""
+
 #SOM visualization of MNIST digits
 image_template = np.zeros((28,28))
 map_image = np.tile(image_template, map_shape)
@@ -155,8 +157,4 @@ dash.add(lambda: plt.imshow(map_image, cmap='gray'))
 #    and plt.title("m: %d n: %d" % (m_row, n_col))
 #    )
 
-dash.add(lambda:
-    plt.plot(lr_history)
-and plt.title('Learning Rate over Time'))
 dash.plotframe()
-"""
