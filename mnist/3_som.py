@@ -117,7 +117,7 @@ for epoch in range(n_epochs_organizing_phase):
              )
 
         # -- weight update
-        w_new = w + lr*hs*(np.tile(x, (map_size,1)).T - w) # vectorized
+        w = w + lr*hs*(np.tile(x, (map_size,1)).T - w) # vectorized
         # readable for loop
         # for neuron_idx in range(map_size):
         #     w[:,neuron_idx] = w[:,neuron_idx] + lr*hs[:,neuron_idx]*(x - w[:,neuron_idx])
