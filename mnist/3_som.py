@@ -5,6 +5,7 @@ import time
 from load import mnist
 from scipy.spatial.distance import cdist
 from idash import IDash
+from sklearn.metrics import accuracy_score
 
 dash = IDash(framerate=0.01)
 
@@ -50,7 +51,7 @@ def init_neighborhood_size(map_shape):
 def init_timeconstant(n_epochs_organizing_phase, sigma_0):
     return float(n_epochs_organizing_phase) / np.log(sigma_0)
 
-trX, teX, trY, teY = mnist(ntrain=5000, ntest=1000, onehot=False)
+trX, teX, trY, teY = mnist(ntrain=60000, ntest=10000, onehot=False)
 xmin_val = trX[0].min()
 xmax_val = trX[0].max()
 
@@ -143,21 +144,34 @@ print "\n", time.time() - t0
 #SOM visualization of MNIST digits
 image_template = np.zeros((28,28))
 map_image = np.tile(image_template, map_shape)
+map_image_w = map_image.copy()
+lattice_predictions = np.zeros(map_size)
 for node_count in range(map_size):
     m_row, n_col = idx1D_to_idx2D(node_count, map_shape)
     closest_x_idx = np.argmin(cdist(w[:,node_count].reshape(1, -1), trX))
     image_of_closest_x = trX[closest_x_idx].reshape((28,28))
+    lattice_predictions[node_count] = trY[closest_x_idx] # prediction mapping
+    image_of_w = w[:,node_count].reshape((28,28))
     map_image[m_row*28:(m_row+1)*28, n_col*28:(n_col+1)*28] = image_of_closest_x
+    map_image_w[m_row*28:(m_row+1)*28, n_col*28:(n_col+1)*28] = image_of_w
 
 dash.add(lambda: plt.imshow(map_image, cmap='gray'))
+dash.add(lambda: plt.imshow(map_image_w, cmap='gray'))
 
-# FIXME; using lambdas will not remember the different m_row, n_col pairs
-#for count, (m_row,n_col) in enumerate(random_weight_idxs):
-#    weight_history[count, epoch] = w[m_row,n_col]
-#    dash.add(lambda:
-#        plt.plot(weight_history[count, :epoch+1])
-#    and plt.title("m: %d n: %d" % (m_row, n_col))
-#    )
+# predictions
+def predict(X, w, lattice_predictions):
+    n_examples = X.shape[0]
+    Ypred = np.zeros(n_examples)
+    for row in range(n_examples):
+        closest_w_idx = np.argmin(cdist(X[row].reshape(1,-1), w.T))
+        Ypred[row] = lattice_predictions[closest_w_idx]
+    return Ypred
+trYpred = predict(trX, w, lattice_predictions)
+teYpred = predict(teX, w, lattice_predictions)
+
+# evaluate
+train_acc = accuracy_score(trY, trYpred)
+test_acc = accuracy_score(teY, teYpred)
 
 dash.add(lambda: plt.plot(lr_history) and plt.ylabel('lr'))
 dash.add(lambda: plt.imshow(hs.reshape(map_shape)) and plt.title('Neighborhood Final'))
