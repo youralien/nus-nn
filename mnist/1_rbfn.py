@@ -20,24 +20,41 @@ def test_rbf():
         assert outs[i] > outs[i+1] # monotonically decreasing w/ increasing r
 test_rbf()
 
-class RBFNetwork():
+class ExtactInterpolationRBFNetwork():
+    """Exact Interpolation is the special case where
+    
+    interpM.shape = (N, N)
+    where N is number of training examples
+    
+    and the centers of the RBF activations are the training data
+    mu_j = x_train_j    
+    """
     def __init__(self, std=0.1):
         self.std = std
 
     def fit(self, trX, trY):
+        
+        n_tr = trY.shape[0]
         interpM = np.zeros((n_tr, n_tr), dtype='float32')
         for i in xrange(n_tr):
             for j in xrange(n_tr):
                 interpM[i,j] = rbf(np.linalg.norm(trX[i] - trX[j]), self.std)
         # TODO: interp matrix should have diag of 1's
         # TODO: interp matrix should also have interesting vals outside of diagonals
-        self.interpM = interpM
-        self.interpMinv = np.linalg.inv(interpM)
-        self.w = np.dot(trY,self.interpMinv)
+        self.w = np.dot(trY,np.linalg.inv(interpM))
+        self.mu = trX
         # TODO: w should be the same shape as trY
         # TODO: interpM * w should yield good accuracies
         assert self.w.shape == trY.shape
-        
-model = RBFNetwork()
+
+model = ExtactInterpolationRBFNetwork()
 model.fit(trX, trY)
 
+
+act = np.zeros((n_te, model.w.shape[0]), dtype='float32')
+for i in range(n_te):
+    for j in range(model.w.shape[0]):
+        diff = teX[i] - model.mu[j]
+        act[i,j] = rbf(np.linalg.norm(diff), 0.1)
+teXpred = np.dot(act, model.w)
+error = np.mean(np.abs(teXpred - teY))
