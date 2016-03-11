@@ -20,14 +20,24 @@ def test_rbf():
         assert outs[i] > outs[i+1] # monotonically decreasing w/ increasing r
 test_rbf()
 
-interpM = np.zeros((n_tr, n_tr), dtype='float32')
-for i in xrange(n_tr):
-    for j in xrange(n_tr):
-        interpM[i,j] = rbf(np.linalg.norm(trX[i] - trX[j]), 0.1)
-# TODO: interp matrix should have diag of 1's
-# TODO: interp matrix should also have interesting vals outside of diagonals
+class RBFNetwork():
+    def __init__(self, std=0.1):
+        self.std = std
 
-w = np.dot(trY,np.linalg.inv(interpM))
-# TODO: w should be the same shape as trY
-# TODO: interpM * w should yield good accuracies
-assert w.shape == trY.shape
+    def fit(self, trX, trY):
+        interpM = np.zeros((n_tr, n_tr), dtype='float32')
+        for i in xrange(n_tr):
+            for j in xrange(n_tr):
+                interpM[i,j] = rbf(np.linalg.norm(trX[i] - trX[j]), self.std)
+        # TODO: interp matrix should have diag of 1's
+        # TODO: interp matrix should also have interesting vals outside of diagonals
+        self.interpM = interpM
+        self.interpMinv = np.linalg.inv(interpM)
+        self.w = np.dot(trY,self.interpMinv)
+        # TODO: w should be the same shape as trY
+        # TODO: interpM * w should yield good accuracies
+        assert self.w.shape == trY.shape
+        
+model = RBFNetwork()
+model.fit(trX, trY)
+
