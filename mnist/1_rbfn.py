@@ -42,19 +42,25 @@ class ExtactInterpolationRBFNetwork():
         # TODO: interp matrix should have diag of 1's
         # TODO: interp matrix should also have interesting vals outside of diagonals
         self.w = np.dot(trY,np.linalg.inv(interpM))
-        self.mu = trX
+        self.mu = trX # mu is the training examples
         # TODO: w should be the same shape as trY
         # TODO: interpM * w should yield good accuracies
         assert self.w.shape == trY.shape
 
+    def predict(self, teX):
+        act = np.zeros((teX.shape[0], self.w.shape[0]), dtype='float32')
+        # iterate over each test example to predict        
+        for i in range(teX.shape[0]):
+            # process through the activation function for each hidden neuron
+            for j in range(self.w.shape[0]):
+                act[i,j] = rbf(np.linalg.norm(teX[i] - model.mu[j]), self.std)
+        teXpred = np.dot(act, model.w)
+        return teXpred
+        
+
 model = ExtactInterpolationRBFNetwork()
 model.fit(trX, trY)
-
-
-act = np.zeros((n_te, model.w.shape[0]), dtype='float32')
-for i in range(n_te):
-    for j in range(model.w.shape[0]):
-        diff = teX[i] - model.mu[j]
-        act[i,j] = rbf(np.linalg.norm(diff), 0.1)
-teXpred = np.dot(act, model.w)
+teXpred = model.predict(teX)
 error = np.mean(np.abs(teXpred - teY))
+
+
