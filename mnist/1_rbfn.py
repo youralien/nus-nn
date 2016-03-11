@@ -22,18 +22,18 @@ test_rbf()
 
 class ExtactInterpolationRBFNetwork():
     """Exact Interpolation is the special case where
-    
+
     interpM.shape = (N, N)
     where N is number of training examples
-    
+
     and the centers of the RBF activations are the training data
-    mu_j = x_train_j    
+    mu_j = x_train_j
     """
     def __init__(self, std=0.1):
         self.std = std
 
     def fit(self, trX, trY):
-        
+
         n_tr = trY.shape[0]
         interpM = np.zeros((n_tr, n_tr), dtype='float32')
         for i in xrange(n_tr):
@@ -49,18 +49,19 @@ class ExtactInterpolationRBFNetwork():
 
     def predict(self, teX):
         act = np.zeros((teX.shape[0], self.w.shape[0]), dtype='float32')
-        # iterate over each test example to predict        
+        # iterate over each test example to predict
         for i in range(teX.shape[0]):
             # process through the activation function for each hidden neuron
             for j in range(self.w.shape[0]):
                 act[i,j] = rbf(np.linalg.norm(teX[i] - model.mu[j]), self.std)
         teXpred = np.dot(act, model.w)
         return teXpred
-        
+
 
 model = ExtactInterpolationRBFNetwork()
 model.fit(trX, trY)
 teXpred = model.predict(teX)
 error = np.mean(np.abs(teXpred - teY))
 
-
+with open('exactrbfn_results.txt', 'aw') as f:
+    f.write("{}\n".format(error))
