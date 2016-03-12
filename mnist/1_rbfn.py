@@ -112,7 +112,8 @@ class RandomFixedCentersRBFNetwork(SpyderObject):
         if n_tr == self.n_hidden: # interpM is square
             self.w = np.dot(trY,np.linalg.pinv(interpM).T)
         else: # we find the minimum using the same as linear least squares
-            # TODO: look to see if interpM.T * interpM is ever singular
+            # TODO: sometimes interpM.T * interpM is singular, others not
+            # FIXME: currently using pinv, not sure if its satisfactory
             self.w = np.dot(
                   np.dot(
                         np.linalg.pinv(np.dot(interpM.T, interpM))
@@ -144,6 +145,7 @@ def question1b():
     model = RandomFixedCentersRBFNetwork()
     model.fit(trX, trY)
     teXpred = model.predict(teX)
+    # FIXME: errors can be REALLY bad (one was 554 MAE, vs expected 1)
     error = np.mean(np.abs(teXpred - teY))
 
     with open('RandomFixedCentersRBFN.txt', 'aw') as f:
