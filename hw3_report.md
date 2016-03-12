@@ -178,27 +178,31 @@ class RandomFixedCentersRBFNetwork(SpyderObject):
 ## Q1 c)
 
 ----------------------------
-  $\lambda$     MAE averaged
-Regularization  over 10 Trials
+  $\lambda$     average MAE
+Regularization  over 100 Trials
 --------------  ------------
-         0.000  0.2679
+         0.000  0.2380
 
-         0.010  0.1730
+         0.001  0.2120
 
-         0.011  0.3019
+         0.010  0.2283
 
-         0.020  0.3001
+         0.050  0.2512
 
-         0.050  0.2624
+         0.100  0.2464
 
-         0.100  0.2643
+         1.000  0.2209
 
-         1.000  0.3311
+         2.000  0.2420
 
-        10.000  0.3747
+         5.000  0.2937
+
+        10.000  0.3646
 ----------------------------
 
-Table: The Mean Absolute Error (MAE) for interpolating the function is given for various degrees of regularization
+Table: The Mean Absolute Error (MAE) for interpolating the function is given for various degrees of regularization.
+
+Interestingly, the amount of regularization between the ranges of $\lambda = [0, 2]$ is negligible, while higher regularization is detrimental to the test performance.  For the interpolation of the given function, it seems like the most optimal value is near $\lambda = 0.001$
 
 The `ExtactInterpolationRBFNetwork` code was modified to take in a regularization term $\lambda$ or `lam`. The calculation of the weight vector
 depended on this `self.lam` parameter:
