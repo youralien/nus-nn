@@ -49,13 +49,6 @@ n_tr = trX.shape[0]
 n_te = teX.shape[0]
 
 rbf = lambda r, std: np.exp(-r**2 / (2.*std**2) )
-# TODO: test rbf
-def test_rbf():
-    rs = [0, 0.05, 0.5]
-    outs = [rbf(r, 0.1) for r in rs]
-    for i in range(len(outs)-1):
-        assert outs[i] > outs[i+1] # monotonically decreasing w/ increasing r
-test_rbf()
 
 class ExtactInterpolationRBFNetwork():
     """Exact Interpolation is the special case where
@@ -99,12 +92,86 @@ model = ExtactInterpolationRBFNetwork()
 model.fit(trX, trY)
 teXpred = model.predict(teX)
 error = np.mean(np.abs(teXpred - teY))
-
-with open('exactrbfn_results.txt', 'aw') as f:
-    f.write("{}\n".format(error))
 ```
 
 ## Q1 b)
+
+Trial MAE
+----- ------
+1     2.0102
+2     0.7222
+3     0.2543
+4     0.3564
+5     2.6395
+6     0.8613
+7     1.0009
+8     0.1683
+9     0.4098
+10    0.6137
+Mean  0.9036
+
+From part A, the mean error was 0.2614, while the mean error for part B is 0.9036. This Randomized Centers RBF Network used 15 Hidden RBF activation functions, as opposed to the 40 that the exact interpolation case used. While 40 hidden units intuitively means to me more expressive power, I think that more expressive power could be to the detriment of a model which may overfit on
+the training data.  The higher error or poorer performance might be attributed to the fact that the 15 randomly selected centers may not have been a representative bunch. In addition, maybe the complexity of the function requires more hidden units to accurately model it.
+
+A similar code structure was used to answer this question, with a class that was adapted for the Random Fixed Centers method:
+
+```python
+class RandomFixedCentersRBFNetwork(SpyderObject):
+    """Random Fixed Centers is the case where
+
+    interpM.shape = (N, H)
+    where H is number of hidden nodes chosen as a parameter
+
+    the centers of the RBF activations are H samples from the train data
+    mu_j = x_train_j
+
+    the standard deviations are defined by
+    sigma_j = d_max / sqrt(2H)
+    where d_max is maximum distance between chosen centers
+    and H the number of hidden nodes
+    """
+    def __init__(self, n_hidden=15):
+        super(RandomFixedCentersRBFNetwork, self).__init__()
+        self.n_hidden = 15 # H parameter
+
+    def fit(self, trX, trY):
+        # select random centers from training data
+        self.mu = trX[np.random.randint(0, trX.shape[0], self.n_hidden)]
+
+        # precompute params
+        if len(self.mu.shape) == 1: # 1D data cant be handled by pdist
+            self.d_max = np.max(pdist(self.mu.reshape(-1, 1)))
+        else: # 2D data can already be handled by pdist
+            self.d_max = np.max(pdist(self.mu))
+        self.std = self.d_max / ( np.sqrt(2.*self.n_hidden) )
+
+        # construct interpolation matrix
+        n_tr = trY.shape[0]
+        interpM = np.zeros((n_tr, self.n_hidden), dtype='float32')
+        for i in xrange(n_tr):
+            for j in xrange(self.n_hidden):
+                interpM[i,j] = rbf(np.linalg.norm(trX[i] - self.mu[j]), self.std)
+        if n_tr == self.n_hidden: # interpM is square
+            self.w = np.dot(trY,np.linalg.pinv(interpM).T)
+        else: # we find the minimum using the same as linear least squares
+            # TODO: sometimes interpM.T * interpM is singular, others not
+            # FIXME: currently using pinv, not sure if its satisfactory
+            self.w = np.dot(
+                  np.dot(
+                        np.linalg.pinv(np.dot(interpM.T, interpM))
+                      , interpM.T)
+                , trY)
+
+    def predict(self, teX):
+        act = np.zeros((teX.shape[0], self.w.shape[0]), dtype='float32')
+        # iterate over each test example to predict
+        for i in range(teX.shape[0]):
+            # process through the activation function for each hidden neuron
+            for j in range(self.w.shape[0]):
+                act[i,j] = rbf(np.linalg.norm(teX[i] - self.mu[j]), self.std)
+        teXpred = np.dot(act, self.w)
+        return teXpred
+```
 
 ## Q2 preface)
 ## Q2 a)
