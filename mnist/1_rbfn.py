@@ -45,9 +45,10 @@ class ExtactInterpolationRBFNetwork(SpyderObject):
 
     the standard deviations are at a fixed width (default 0.1)
     """
-    def __init__(self, std=0.1):
+    def __init__(self, std=0.1, lam=0):
         super(ExtactInterpolationRBFNetwork, self).__init__()
         self.std = std
+        self.lam = lam # lambda regularization; 0 is no regularization
 
     def fit(self, trX, trY):
 
@@ -58,7 +59,14 @@ class ExtactInterpolationRBFNetwork(SpyderObject):
                 interpM[i,j] = rbf(np.linalg.norm(trX[i] - trX[j]), self.std)
         # TODO: interp matrix should have diag of 1's
         # TODO: interp matrix should also have interesting vals outside of diagonals
-        self.w = np.dot(trY,np.linalg.inv(interpM))
+        if self.lam == 0:
+            self.w = np.dot(trY,np.linalg.inv(interpM))
+        else: # regularized!
+            self.w = np.dot(
+                  np.dot(
+                        np.linalg.pinv(np.dot(interpM.T, interpM) + self.lam*np.diag(np.ones(interpM.shape[1])))
+                      , interpM.T)
+                , trY)
         self.mu = trX # mu is the training examples
         # TODO: w should be the same shape as trY
         # TODO: interpM * w should yield good accuracies
@@ -151,6 +159,26 @@ def question1b():
     with open('RandomFixedCentersRBFN.txt', 'aw') as f:
         f.write("{}\n".format(error))
 
+def question1c():
+    model = ExtactInterpolationRBFNetwork(lam=0.011)
+    model.fit(trX, trY)
+    teXpred = model.predict(teX)
+    # FIXME: errors can be REALLY bad (one was 554 MAE, vs expected 1)
+    error = np.mean(np.abs(teXpred - teY))
+
+    with open('RegularizedRBFN_Lambda{}.txt'.format(model.lam), 'aw') as f:
+        f.write("{}\n".format(error))
+
+def test_regularized():
+    model = ExtactInterpolationRBFNetwork(lam=0)
+    model.fit(trX, trY)
+
+    regmodel = ExtactInterpolationRBFNetwork(lam=0.1)
+    regmodel.fit(trX, trY)
+
+    assert(np.linalg.norm(regmodel.w) < np.linalg.norm(model.w))
+test_regularized()
+
 def calculate_mean(path):
     f = open(path, 'r')
     foo = f.readlines()
@@ -160,4 +188,5 @@ def calculate_mean(path):
 
 if __name__ == "__main__":
 #    question1a()
-    question1b()
+#    question1b()
+    question1c()

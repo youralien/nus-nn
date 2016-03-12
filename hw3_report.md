@@ -110,6 +110,8 @@ Trial MAE
 10    0.6137
 Mean  0.9036
 
+Table: The Mean Absolute Error (MAE) is displayed for the Randomized Centers RBF Network with 15 chosen centers.  10 trials were performed, and the errors were averaged over these trials.
+
 From part A, the mean error was 0.2614, while the mean error for part B is 0.9036. This Randomized Centers RBF Network used 15 Hidden RBF activation functions, as opposed to the 40 that the exact interpolation case used. While 40 hidden units intuitively means to me more expressive power, I think that more expressive power could be to the detriment of a model which may overfit on
 the training data.  The higher error or poorer performance might be attributed to the fact that the 15 randomly selected centers may not have been a representative bunch. In addition, maybe the complexity of the function requires more hidden units to accurately model it.
 
@@ -173,6 +175,42 @@ class RandomFixedCentersRBFNetwork(SpyderObject):
         return teXpred
 ```
 
+## Q1 c)
+
+----------------------------
+  $\lambda$     MAE averaged
+Regularization  over 10 Trials
+--------------  ------------
+         0.000  0.2679
+
+         0.010  0.1730
+
+         0.011  0.3019
+
+         0.020  0.3001
+
+         0.050  0.2624
+
+         0.100  0.2643
+
+         1.000  0.3311
+
+        10.000  0.3747
+----------------------------
+
+Table: The Mean Absolute Error (MAE) for interpolating the function is given for various degrees of regularization
+
+The `ExtactInterpolationRBFNetwork` code was modified to take in a regularization term $\lambda$ or `lam`. The calculation of the weight vector
+depended on this `self.lam` parameter:
+
+```python
+self.w = np.dot(
+      np.dot(
+            np.linalg.pinv(np.dot(interpM.T, interpM) + self.lam*np.diag(np.ones(interpM.shape[1])))
+          , interpM.T)
+    , trY)
+```
+
 ## Q2 preface)
 ## Q2 a)
 ## Q2 b)
@@ -190,6 +228,8 @@ Instead of using the MNIST.mat file, I used the full MNIST dataset, with 60000 t
 ## Q3 b)
 
 ![10 x 10 Self Organizing Map Lattice, weight values visualized](mnist/weights.png)
+
+![25 x 25 Self Organizing Map Lattice, weight values visualized. Part C talks about the effects of increasing the lattice size on predictive power](mnist/weights_25x25.png)
 
 ## Q3 c)
 
