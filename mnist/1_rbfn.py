@@ -160,7 +160,7 @@ def question1b():
         f.write("{}\n".format(error))
 
 def question1c():
-    model = ExtactInterpolationRBFNetwork(lam=0.011)
+    model = ExtactInterpolationRBFNetwork(lam=5.0)
     model.fit(trX, trY)
     teXpred = model.predict(teX)
     # FIXME: errors can be REALLY bad (one was 554 MAE, vs expected 1)
@@ -179,10 +179,14 @@ def test_regularized():
     assert(np.linalg.norm(regmodel.w) < np.linalg.norm(model.w))
 test_regularized()
 
-def calculate_mean(path):
+def read_errors(path):
     f = open(path, 'r')
     foo = f.readlines()
-    mean = np.mean([float(line.strip('\n')) for line in foo])
+    errors = [float(line.strip('\n')) for line in foo]
+    return errors
+
+def calculate_mean(path):
+    mean = np.mean(read_errors(path))
     print mean
     return mean
 
