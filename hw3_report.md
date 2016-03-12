@@ -196,13 +196,13 @@ Instead of using the MNIST.mat file, I used the full MNIST dataset, with 60000 t
 
 ## Q3 a)
 
-![10 x 10 Self Organizing Map Lattice, closest training image visualized](mnist/nearest_example.png)
+![10 x 10 Self Organizing Map Lattice, closest training image visualized](mnist/nearest_example_inverted.png)
 
 ## Q3 b)
 
-![10 x 10 Self Organizing Map Lattice, weight values visualized](mnist/weights.png)
+![10 x 10 Self Organizing Map Lattice, weight values visualized](mnist/weights_inverted.png)
 
-![25 x 25 Self Organizing Map Lattice, weight values visualized. Part C talks about the effects of increasing the lattice size on predictive power](mnist/weights_25x25.png)
+![25 x 25 Self Organizing Map Lattice, weight values visualized. Part C talks about the effects of increasing the lattice size on predictive power](mnist/weights_25x25_inverted.png)
 
 ## Q3 c)
 
