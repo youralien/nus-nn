@@ -1,8 +1,6 @@
 # EE5904R: NEURAL NETWORKS HW3
 by Ryan Louie, A0149643X
 
-## Q1 preface)
-
 ## Q1 a)
 The underlying function
 
@@ -13,24 +11,9 @@ was to be predicted, by training on noisy observations of this function
 ```python
 noisy_func = lambda x: func(x) + 0.3*np.random.randn()
 ```
-The results for 10 trials are given below.
+The results for 100 trials are given below.
 
-
-Trial   MAE
------   ------
-1       0.7306
-2       0.0780
-4       0.0694
-5       0.1538
-6       0.4770
-7       0.0752
-8       0.1445
-9       0.3065
-10      0.5103
-Mean    0.2614
-
-
-Table: Mean Absolute Error (MAE) is displayed for 10 trials of an Exact Interpolation RBF Network. The variations in the 10 trials is explained by the added noise in the training set. Since the method of exact interpolation is used, the added noise results in the large difference in what model is produced of the function.
+![Exact Interpolation RBF Network. Average MAE 0.2380; Histogram distribution of the MAE over the 100 trials](mnist/Q1partAhist.png){width=400px}
 
 The code to answer this question was written in `python`, using the `numpy` library for matrix and vector computations.
 
@@ -96,21 +79,7 @@ error = np.mean(np.abs(teXpred - teY))
 
 ## Q1 b)
 
-Trial MAE
------ ------
-1     2.0102
-2     0.7222
-3     0.2543
-4     0.3564
-5     2.6395
-6     0.8613
-7     1.0009
-8     0.1683
-9     0.4098
-10    0.6137
-Mean  0.9036
-
-Table: The Mean Absolute Error (MAE) is displayed for the Randomized Centers RBF Network with 15 chosen centers.  10 trials were performed, and the errors were averaged over these trials.
+![Random Fixed Centers RBF Network. Average MAE 0.8861; Histogram distribution of the MAE over the 100 trials](mnist/Q1partBhist.png){width=400px}
 
 From part A, the mean error was 0.2614, while the mean error for part B is 0.9036. This Randomized Centers RBF Network used 15 Hidden RBF activation functions, as opposed to the 40 that the exact interpolation case used. While 40 hidden units intuitively means to me more expressive power, I think that more expressive power could be to the detriment of a model which may overfit on
 the training data.  The higher error or poorer performance might be attributed to the fact that the 15 randomly selected centers may not have been a representative bunch. In addition, maybe the complexity of the function requires more hidden units to accurately model it.
