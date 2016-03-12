@@ -151,6 +151,13 @@ def question1b():
     with open('RandomFixedCentersRBFN.txt', 'aw') as f:
         f.write("{}\n".format(error))
 
+def calculate_mean(path):
+    f = open(path, 'r')
+    foo = f.readlines()
+    mean = np.mean([float(line.strip('\n')) for line in foo])
+    print mean
+    return mean
+
 if __name__ == "__main__":
 #    question1a()
     question1b()
