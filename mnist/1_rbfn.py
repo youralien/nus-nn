@@ -216,6 +216,15 @@ def question2a():
     teXpred = model.predict(teX)
     evaluate_mnist_RBFN(trXpred, trY, teXpred, teY)
 
+def question2b():
+    trX, trY, teX, teY = question2data()
+    model = RandomFixedCentersRBFNetwork(n_hidden=100)
+    model.fit(trX, trY)
+    trXpred = model.predict(trX)
+    teXpred = model.predict(teX)
+    fig_outfile = "Q2partBeval.png"
+    evaluate_mnist_RBFN(trXpred, trY, teXpred, teY, fig_outfile)
+
 def question2c(lam):
     trX, trY, teX, teY = question2data()
     model = ExtactInterpolationRBFNetwork(std=100, lam=lam)
@@ -280,5 +289,6 @@ if __name__ == "__main__":
 #    question1b()
 #    question1c()
 #    question2a()
-    for lam in [1e-4, 1e-3, 1e-2, 1e-1, 1e-0, 1e1]:
-        question2c(lam)
+    question2b()
+#    for lam in [1e-4, 1e-3, 1e-2, 1e-1, 1e-0, 1e1]:
+#        question2c(lam)
