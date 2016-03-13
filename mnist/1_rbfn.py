@@ -216,13 +216,13 @@ def question2a():
     teXpred = model.predict(teX)
     evaluate_mnist_RBFN(trXpred, trY, teXpred, teY)
 
-def question2b(lam):
+def question2c(lam):
     trX, trY, teX, teY = question2data()
     model = ExtactInterpolationRBFNetwork(std=100, lam=lam)
     model.fit(trX, trY)
     trXpred = model.predict(trX)
     teXpred = model.predict(teX)
-    fig_outfile = "Q2partBLambda{}.png".format(model.lam)
+    fig_outfile = "Q2partCLambda{}.png".format(model.lam)
     evaluate_mnist_RBFN(trXpred, trY, teXpred, teY, fig_outfile)
 
 def evaluate_mnist_RBFN(TrPred, TrLabel, TePred, TeLabel, fig_outfile=None):
@@ -279,6 +279,6 @@ if __name__ == "__main__":
 #    question1a()
 #    question1b()
 #    question1c()
-    question2a()
-#    for lam in [1e-3, 1e-2, 1e-1, 1e-0, 1e1, 1e2]:
-#        question2b(lam)
+#    question2a()
+    for lam in [1e-4, 1e-3, 1e-2, 1e-1, 1e-0, 1e1]:
+        question2c(lam)
