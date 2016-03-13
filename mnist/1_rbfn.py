@@ -132,20 +132,22 @@ class RandomFixedCentersRBFNetwork(SpyderObject):
     where d_max is maximum distance between chosen centers
     and H the number of hidden nodes
     """
-    def __init__(self, n_hidden=15):
+    def __init__(self, n_hidden=15, std=None):
         super(RandomFixedCentersRBFNetwork, self).__init__()
         self.n_hidden = 15 # H parameter
+        self.std = std
 
     def fit(self, trX, trY):
         # select random centers from training data
         self.mu = trX[np.random.randint(0, trX.shape[0], self.n_hidden)]
 
         # precompute params
-        if len(self.mu.shape) == 1: # 1D data cant be handled by pdist
-            self.d_max = np.max(pdist(self.mu.reshape(-1, 1)))
-        else: # 2D data can already be handled by pdist
-            self.d_max = np.max(pdist(self.mu))
-        self.std = self.d_max / ( np.sqrt(2.*self.n_hidden) )
+        if self.std is None:
+            if len(self.mu.shape) == 1: # 1D data cant be handled by pdist
+                self.d_max = np.max(pdist(self.mu.reshape(-1, 1)))
+            else: # 2D data can already be handled by pdist
+                self.d_max = np.max(pdist(self.mu))
+            self.std = self.d_max / ( np.sqrt(2.*self.n_hidden) )
 
         # construct interpolation matrix
         n_tr = trY.shape[0]
@@ -234,12 +236,21 @@ def question2c(lam):
     fig_outfile = "Q2partCLambda{}.png".format(model.lam)
     evaluate_mnist_RBFN(trXpred, trY, teXpred, teY, fig_outfile)
 
+def question2d(width):
+    trX, trY, teX, teY = question2data()
+    model = RandomFixedCentersRBFNetwork(n_hidden=100, std=width)
+    model.fit(trX, trY)
+    trXpred = model.predict(trX)
+    teXpred = model.predict(teX)
+    fig_outfile = "Q2partDwidth{}.png".format(width)
+    evaluate_mnist_RBFN(trXpred, trY, teXpred, teY, fig_outfile)
+
 def evaluate_mnist_RBFN(TrPred, TrLabel, TePred, TeLabel, fig_outfile=None):
     TrAcc=np.zeros(TrPred.shape[0]);
     TeAcc=np.zeros(TrPred.shape[0]);
     thr=np.zeros(TrPred.shape[0]);
     for i in range(TrPred.shape[0]):
-        t=(np.max(TrPred)-np.min(TrPred))*(i-1)/TrPred.shape[0]+np.min(TrPred) ;
+        t=(np.max(TrPred)-np.min(TrPred))*(i-1)/float(TrPred.shape[0])+np.min(TrPred) ;
         thr[i]=t;
         neg = np.where(TrPred<t);
         pos = np.where(TrPred>=t);
@@ -289,6 +300,8 @@ if __name__ == "__main__":
 #    question1b()
 #    question1c()
 #    question2a()
-    question2b()
+#    question2b()
 #    for lam in [1e-4, 1e-3, 1e-2, 1e-1, 1e-0, 1e1]:
 #        question2c(lam)
+    for std in [1e-1, 1e0, 1e1, 1e2, 1e3, 1e4]:
+        question2d(std)
