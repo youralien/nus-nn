@@ -1,5 +1,7 @@
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial.distance import pdist
+from load import mnist, one_hot
 
 def question1data():
     func = lambda x: 1.2*np.sin(np.pi*x) - np.cos(2.4*np.pi*x)
@@ -12,6 +14,31 @@ def question1data():
     
     return trX, trY, teX, teY
 #TODO: plot y values
+def keep_threes_and_fours(X, Y):
+    three_idxs = np.where(Y == 3)
+    four_idxs = np.where(Y == 4)
+    threes_and_fours_idxs = np.concatenate((three_idxs[0], four_idxs[0]))
+    return X[threes_and_fours_idxs], Y[threes_and_fours_idxs]
+
+def convert_three_and_four_to_zero_and_one(Y):
+    three_idxs = np.where(Y == 3)
+    four_idxs = np.where(Y == 4)
+    Y[three_idxs] = 0
+    Y[four_idxs] = 1
+    return Y
+
+def question2data():
+    trX, teX, trY, teY = mnist(ntrain=1000, ntest=250, onehot=False)
+    # keep threes and fours only
+    trX, trY = keep_threes_and_fours(trX, trY)
+    teX, teY = keep_threes_and_fours(teX, teY)
+    # converts 3 to 0, and 4 to 1 (two classes)    
+    trY = convert_three_and_four_to_zero_and_one(trY)
+    teY = convert_three_and_four_to_zero_and_one(teY)
+#    trY = one_hot(trY, 2)
+#    teY = one_hot(teY, 2)
+    # TODO: shuffle
+    return trX, trY, teX, teY
 
 rbf = lambda r, std: np.exp(-r**2 / (2.*std**2) )
 # TODO: test rbf
@@ -173,6 +200,37 @@ def question1c():
     with open('RegularizedRBFN_Lambda{}.txt'.format(model.lam), 'aw') as f:
         f.write("{}\n".format(error))
 
+def question2a():
+    trX, trY, teX, teY = question2data()
+    model = ExtactInterpolationRBFNetwork()
+    model.fit(trX, trY)
+    trXpred = model.predict(trX)    
+    teXpred = model.predict(teX)
+    evaluate_mnist_RBFN(trXpred, trY, teXpred, teY)
+
+def evaluate_mnist_RBFN(TrPred, TrLabel, TePred, TeLabel):
+    TrAcc=np.zeros(TrPred.shape[0]);
+    TeAcc=np.zeros(TrPred.shape[0]);
+    thr=np.zeros(TrPred.shape[0]);
+    for i in range(TrPred.shape[0]):
+        t=(np.max(TrPred)-np.min(TrPred))*(i-1)/TrPred.shape[0]+np.min(TrPred) ;
+        thr[i]=t;
+        neg = np.where(TrPred<t);
+        pos = np.where(TrPred>=t);
+        TrAcc [i]= np.size(np.where(TrLabel[neg]==0))+np.size(np.where(TrLabel[pos]==1));
+        TrAcc [i]= TrAcc[i]/float(np.size(TrLabel));
+        neg = np.where(TePred<t);
+        pos = np.where(TePred>=t);
+        TeAcc [i]= np.size(np.where(TeLabel[neg]==0))+np.size(np.where(TeLabel[pos]==1));
+        TeAcc [i]= TeAcc [i]/float(np.size(TeLabel));
+    plt.hold('on')
+    plt.plot(thr, TrAcc,'.-')
+    plt.plot(thr, TeAcc,'^-')
+    plt.legend(['tr','te']) # FIXME: legends
+    plt.xlabel('Threshold')
+    plt.ylabel('Accuracy')
+    plt.show()
+
 def test_regularized():
     trX, trY, teX, teY = question1data()
     model = ExtactInterpolationRBFNetwork(lam=0)
@@ -198,4 +256,5 @@ def calculate_mean(path):
 if __name__ == "__main__":
 #    question1a()
 #    question1b()
-    question1c()
+#    question1c()
+    question2a()
