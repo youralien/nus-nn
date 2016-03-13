@@ -6,14 +6,22 @@ from load import mnist, one_hot
 def question1data():
     func = lambda x: 1.2*np.sin(np.pi*x) - np.cos(2.4*np.pi*x)
     noisy_func = lambda x: func(x) + 0.3*np.random.randn()
-    
+
     trX = np.arange(-1,1,0.05)
     teX = np.arange(-1,1,0.01)
     trY = noisy_func(trX) # observed training data is noisy
     teY = func(teX)       # actual test data is the real function
-    
+
     return trX, trY, teX, teY
 #TODO: plot y values
+
+def permute(X, Y):
+    matrix = np.column_stack((X,Y))
+    np.random.shuffle(matrix)
+    X = matrix[:,:-1]
+    Y = matrix[:,-1].reshape(-1,1)
+    return X,Y
+
 def keep_threes_and_fours(X, Y):
     three_idxs = np.where(Y == 3)
     four_idxs = np.where(Y == 4)
@@ -32,12 +40,12 @@ def question2data():
     # keep threes and fours only
     trX, trY = keep_threes_and_fours(trX, trY)
     teX, teY = keep_threes_and_fours(teX, teY)
-    # converts 3 to 0, and 4 to 1 (two classes)    
+    # converts 3 to 0, and 4 to 1 (two classes)
     trY = convert_three_and_four_to_zero_and_one(trY)
     teY = convert_three_and_four_to_zero_and_one(teY)
-#    trY = one_hot(trY, 2)
-#    teY = one_hot(teY, 2)
-    # TODO: shuffle
+    # FIXME: WE do not one hot; we can use a single output for binary classification
+    trX, trY = permute(trX, trY)
+    teX, teY = permute(teX, teY)
     return trX, trY, teX, teY
 
 rbf = lambda r, std: np.exp(-r**2 / (2.*std**2) )
@@ -88,7 +96,7 @@ class ExtactInterpolationRBFNetwork(SpyderObject):
         # TODO: interp matrix should have diag of 1's
         # TODO: interp matrix should also have interesting vals outside of diagonals
         if self.lam == 0:
-            self.w = np.dot(trY,np.linalg.inv(interpM))
+            self.w = np.dot(trY.T,np.linalg.inv(interpM)).T
         else: # regularized!
             self.w = np.dot(
                   np.dot(
@@ -179,7 +187,7 @@ def question1a():
 
 
 def question1b():
-    trX, trY, teX, teY = question1data()    
+    trX, trY, teX, teY = question1data()
     model = RandomFixedCentersRBFNetwork()
     model.fit(trX, trY)
     teXpred = model.predict(teX)
@@ -202,9 +210,9 @@ def question1c():
 
 def question2a():
     trX, trY, teX, teY = question2data()
-    model = ExtactInterpolationRBFNetwork()
+    model = ExtactInterpolationRBFNetwork(std=100)
     model.fit(trX, trY)
-    trXpred = model.predict(trX)    
+    trXpred = model.predict(trX)
     teXpred = model.predict(teX)
     evaluate_mnist_RBFN(trXpred, trY, teXpred, teY)
 
