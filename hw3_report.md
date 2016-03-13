@@ -186,9 +186,40 @@ self.w = np.dot(
 
 ## Q2 preface)
 ## Q2 a)
+
+![Exact Interpolation Method with standard deviation of 100](mnist/Q2partAeval.png){width=300px}
+
 ## Q2 b)
 
+![100 Randomly Selected Centers](mnist/Q2partBeval.png){width=300px}
 
+## Q2 c)
+
+![$\lambda = 0.0001$](mnist/Q2partCLambda0.0001.png){width=300px}
+
+![$\lambda = 0.001$](mnist/Q2partCLambda0.001.png){width=300px}
+
+![$\lambda = 0.01$](mnist/Q2partCLambda0.01.png){width=300px}
+
+![$\lambda = 0.1$](mnist/Q2partCLambda0.1.png){width=300px}
+
+![$\lambda = 1.0$](mnist/Q2partCLambda1.0.png){width=300px}
+
+![$\lambda = 10.0$](mnist/Q2partCLambda10.0.png){width=300px}
+
+## Q2 d)
+
+![$\sigma = 0.1$](mnist/Q2partDwidth0.1.png){width=300px}
+
+![$\sigma = 1.0$](mnist/Q2partDwidth1.0.png){width=300px}
+
+![$\sigma = 10.0$](mnist/Q2partDwidth10.0.png){width=300px}
+
+![$\sigma = 100.0$](mnist/Q2partDwidth100.0.png){width=300px}
+
+![$\sigma = 1000.0$](mnist/Q2partDwidth1000.0.png){width=300px}
+
+![$\sigma = 10000.0$](mnist/Q2partDwidth10000.0.png){width=300px}
 
 ## Q3 preface)
 Since my student ID ends in `43`, I worked with the all the MNIST digits excluding `4` and `3`.
