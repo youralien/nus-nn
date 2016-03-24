@@ -10,21 +10,21 @@ trX = bsxfun(@rdivide, bsxfun(@minus, trX, mu), stdev);
 
 % SVM fit
 margin_type = 'hard';
-kernel_type = 'linear';
-if margin_type == 'hard'
+kernel_type = 'poly';
+if strcmp(margin_type,'hard')
     C = 10^6; 
 else % soft margin
-    C = 0.1;
+    C = 1;
 end
-if kernel_type == 'linear'
+if strcmp(kernel_type,'linear')
     h1 = trY*trY'; % d_i * d_j
-    h2 = trX'*trX; % X_i * X_j
-    H = bsxfun(@times, h1, h2); % d_i * d_j * X_i * X_j
+    K = trX'*trX; % X_i * X_j
+    H = bsxfun(@times, h1, K); % d_i * d_j * X_i * X_j
 else % polynomial kernel
     p = 2;
     h1 = trY*trY'; % d_i * d_j
-    h2 = (trX'*trX + 1)^p; % K(X_i, X_j) = Where K is Polynomial
-    H = bsxfun(@times, h1, h2); % d_i * d_j * K(X_i, X_j)
+    K = (trX'*trX + 1)^p; % K(X_i, X_j) = Where K is Polynomial
+    H = bsxfun(@times, h1, K); % d_i * d_j * K(X_i, X_j)
 end
 
 f = -1 * ones(1, n_train);
@@ -36,8 +36,9 @@ alpha0 = [];
 options = optimoptions('quadprog','Algorithm','interior-point-convex');
 [alpha,fval,exitflag]=quadprog(H,f,[],[],Aeq,Beq,lb,ub,alpha0,options);
 
-sv_idx = find(alpha > graythresh(alpha)); % support vectors are the non-zeroish vectors
-w = sum(bsxfun(@times, bsxfun(@times, alpha(sv_idx), trY(sv_idx)), trX(:, sv_idx)'));
+thresh = graythresh(alpha);
+sv_idx = find(alpha > thresh); % support vectors are the non-zeroish vectors
+w = sum(bsxfun(@times, bsxfun(@times, alpha, trY), trX'));
 random_sv = sv_idx(randperm(length(sv_idx),1));
 b = 1 / trY(random_sv) - w*trX(:,random_sv);
 % 2D viz
