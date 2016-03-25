@@ -10,22 +10,17 @@ stdev = std(trX, 0, 2);
 trX = bsxfun(@rdivide, bsxfun(@minus, trX, mu), stdev);
 
 % -- FIT
-margin_type = 'hard';
+C = 0.6;
 kernel_type = 'poly';
-if strcmp(margin_type,'hard')
-    C = 10^6;
-else % soft margin
-    C = 0.1;
-end
 if strcmp(kernel_type,'linear')
     h1 = trY*trY'; % d_i * d_j
     K = trX'*trX; % X_i * X_j
-    H = bsxfun(@times, h1, K); % d_i * d_j * X_i * X_j
+    H = h1.*K; % d_i * d_j * X_i * X_j
 else % polynomial kernel
-    p = 2;
+    p = 3;
     h1 = trY*trY'; % d_i * d_j
     K = (trX'*trX + 1).^p; % K(X_i, X_j) = Where K is Polynomial
-    H = bsxfun(@times, h1, K); % d_i * d_j * K(X_i, X_j)
+    H = h1.*K; % d_i * d_j * K(X_i, X_j)
 end
 
 f = -1 * ones(1, n_train);
@@ -37,11 +32,12 @@ alpha0 = [];
 options = optimoptions('quadprog','Algorithm','interior-point-convex');
 [alpha,fval,exitflag]=quadprog(H,f,[],[],Aeq,Beq,lb,ub,alpha0,options);
 
-thresh = graythresh(alpha);
+thresh = max(alpha) * 0.01;
 sv_idx = find(alpha > thresh); % support vectors are the non-zeroish vectors
-w = sum(bsxfun(@times, bsxfun(@times, alpha, trY), trX'));
-random_sv = sv_idx(randperm(length(sv_idx),1));
-b = 1 / trY(random_sv) - w*trX(:,random_sv); % use support vectors only
+% b = 1 / d_i - sum(alpha_j*d_j*K(x_j, x_i)) where i is support vector, j
+% is data example
+bs = 1 ./ trY(sv_idx)' - sum(bsxfun(@times, alpha .* trY, K(:,sv_idx)),1);
+b = mean(bs);
 
 % load test data
 load(strcat(['test' dataset '.mat']));
@@ -59,7 +55,7 @@ else
     Kpred = (trX(:,sv_idx)'*Xnew + 1).^p;
 end
 g0 = bsxfun(@times, alpha(sv_idx), trY(sv_idx));
-g =  g0'*Kpred;
+g =  g0'*Kpred + b;
 predY = sign(g);
 acc = mean(predY == trY')
 
@@ -83,10 +79,11 @@ if strcmp(dataset,'') == 0 % if its not the full dataset
         else
             Kpred = (trX(:,sv_idx)'*Xbound + 1).^p;
         end
-        g0 = bsxfun(@times, alpha(sv_idx), trY(sv_idx));
-        g =  g0'*Kpred;
-        bound_idx = find(abs(g) < 0.05);
+        g0 = alpha(sv_idx) .* trY(sv_idx);
+        gpred =  g0'*Kpred + b; % w*x + b
+        bound_idx = find(abs(gpred) < 0.05);
         plot(Xbound(1, bound_idx), Xbound(2,bound_idx), 'b.')
+        plot(trX(1,sv_idx), trX(2,sv_idx), 'm*');
     end
     hold off
 end
