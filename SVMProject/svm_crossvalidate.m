@@ -1,5 +1,10 @@
 % load train data
 load(strcat(['train.mat'])) % data and label exist
+datatmp = data;
+labeltmp = label;
+load(strcat(['test.mat']))
+data = [data, datatmp];
+label = [label', labeltmp']';
 % shuffle data
 shuffle_idx = randperm(length(label));
 data = data(:,shuffle_idx);
@@ -31,8 +36,8 @@ for ith=1:length(ps)
             svm = SVMEstimator(Cs(jth),kernel_types{ith},ps(ith),1e-10);
             svm.fit(trX, trY);
             
-            subplot(5,5,ith*jth)
-            hist(svm.alpha, 100)
+%             subplot(5,5,ith*jth)
+%             hist(svm.alpha, 100)
             
             pred_train = svm.predict(trX);
             pred_valid = svm.predict(vaX);
@@ -46,3 +51,20 @@ for ith=1:length(ps)
 end
 
 final_accuracy_table = [accuracy_table_train, accuracy_table_valid];
+
+%%%%%%%%%%%
+% RESULTS %
+%%%%%%%%%%%
+% 3-Fold Random Fold Validation using the 285 data examples...
+% Best Average Validation Accuracy: .9823
+% 2 Parameter Schemes:
+%   C = 0.6, p = 0, kernel='linear', alpha_thresh=1e-7
+%   C = 0.1, p = 0, kernel='linear', alpha_thresh=1e-10
+% Result in .95 and .96 accuracies on test set, respectively.
+
+% 3-Fold Random Fold Validation using the 385 (train + test)...
+% Best Average Validation Accuracy: .9843
+% 1 Parameter Scheme:
+%   C = 0.1, p = 0, kernel='linear', alpha_thresh=1e-10
+% Results in test: .96.  This happens to be a value that worked for
+% 285 cross val too!
