@@ -34,10 +34,17 @@ options = optimoptions('quadprog','Algorithm','interior-point-convex');
 
 thresh = max(alpha) * 0.01;
 sv_idx = find(alpha > thresh); % support vectors are the non-zeroish vectors
+
+% average b
 % b = 1 / d_i - sum(alpha_j*d_j*K(x_j, x_i)) where i is support vector, j
 % is data example
 bs = 1 ./ trY(sv_idx)' - sum(bsxfun(@times, alpha .* trY, K(:,sv_idx)),1);
 b = mean(bs);
+
+% choose a random b
+% rand_sv = sv_idx(randperm(length(sv_idx),1));
+% b = 1 / trY(rand_sv) - sum(alpha .* trY .* K(:,rand_sv));
+% disp(rand_b);
 
 % load test data
 load(strcat(['test' dataset '.mat']));
