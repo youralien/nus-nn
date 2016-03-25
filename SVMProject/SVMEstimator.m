@@ -4,21 +4,27 @@ classdef SVMEstimator < handle
         C
         kernel_type
         p
+        alpha_thresh
         mu
         stdev
         sv_data
         sv_alpha
         sv_label
         b
+        alpha
+        
     end
     
     methods
         
-        function this = SVMEstimator(C, kernel_type, p)
+        function this = SVMEstimator(C, kernel_type, p, alpha_thresh)
             this.C = C;
             this.kernel_type = kernel_type;
             this.p = p;
-            
+            if nargin < 4
+                alpha_thresh = 1e-8; % determined experimentally, with quadprog having 1e-8 mysteriously in its default stopping criteria
+            end
+            this.alpha_thresh = alpha_thresh;
         end
         
         function fit(this, X, Y)
@@ -49,11 +55,11 @@ classdef SVMEstimator < handle
             lb = zeros(n_train, 1); % alpha lower bound = 0
             ub = this.C * ones(n_train, 1); % and upper bound = C
             alpha0 = [];
-            options = optimoptions('quadprog','Algorithm','interior-point-convex');
+            options = optimoptions('quadprog','Algorithm','interior-point-convex','MaxIter',1000);
             [alpha,~,~]=quadprog(H,f,[],[],Aeq,Beq,lb,ub,alpha0,options);
             
-            thresh = max(alpha) * 0.01;
-            sv_idx = find(alpha > thresh); % support vectors are the non-zeroish vectors
+            this.alpha = alpha;
+            sv_idx = find(alpha > this.alpha_thresh); % support vectors are the non-zeroish vectors
             
             % save support vectors
             this.sv_data = X(:,sv_idx);
@@ -86,7 +92,7 @@ classdef SVMEstimator < handle
             g = (this.sv_alpha .* this.sv_label)'*K + this.b;
             g = g'; % make output (1, n_examples)
         end
-
+        
         function pred = predict(this, X)
             % Calculates positive and negative predictions. Assumes data is
             % unormalized.
