@@ -25,16 +25,32 @@ Q = zeros(100,4);
 N = zeros(100,4);
 
     
-    function a_k = epsilonGreedy(reward, state, epsilon)
+    function a_k = epsilonGreedy(reward, s_k, epsilon)
         if rand() < epsilon % exploration
-            valid_actions = find(reward(state,:) > 0);
+            valid_actions = find(reward(s_k,:) > 0);
             a_k = randsample(valid_actions, 1);
         else % exploitation
-            reward_for_actions = reward(state,:)
+            reward_for_actions = reward(s_k,:);
             [~, a_k] = max(reward_for_actions);
         end
     end
 
-a_k = epsilonGreedy(task1.reward, 1, 0.2)
+    function s_k1 = transition(s_k, a_k, n_states, shp)
+        if nargin < 3 % default to 100 states, 10x10 grid
+            n_states = 100;
+            shp = [10 10]; 
+        end
+        action_movements = [
+            -1, 0; % up
+             0, 1; % right
+             1, 0; % down
+             0,-1;]; % left
+        s_k_sub = ind2sub(n_states,s_k); % current state i,j
+        s_k1_sub = s_k_sub + action_movements(a_k,:); % next state i,j
+        s_k1 = sub2ind(shp, s_k1_sub(1), s_k1_sub(2)); % next state
+    end
 
+s_k = 1
+a_k = epsilonGreedy(task1.reward, s_k, 0.2)
+s_k1 = transition(s_k, a_k)
 end
