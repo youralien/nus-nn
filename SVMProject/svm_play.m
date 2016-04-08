@@ -16,7 +16,7 @@ for idx=1:length(datasets)
     teX = data;
     teY = label;
 
-    svm = SVMEstimator(Cs(idx),kernel_types{idx},3);
+    svm = SVMEstimator(Cs(idx),kernel_types{idx},3, 1e-84);
     svm.fit(trX, trY);
     pred_train = svm.predict(trX);
     pred_test = svm.predict(teX);

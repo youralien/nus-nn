@@ -7,7 +7,7 @@ from scipy.io import loadmat
 import numpy as np
 
 # MARKUS: change this line to the path of your .mat file
-mat_file = 'final_accuracy_table_1e-7.mat'
+mat_file = 'crossval_accuracy_table_1e-9.mat'
 
 f = loadmat(mat_file)
 # A: array-like, shape (5,10)
@@ -53,8 +53,8 @@ $p=3$ & %0.4f &%0.4f &%0.4f &%0.4f &%0.4f &%0.4f &%0.4f &%0.4f \\\\ \hline
 $p=4$ & %0.4f &%0.4f &%0.4f &%0.4f &%0.4f &%0.4f &%0.4f &%0.4f \\\\ \hline
 $p=5$ & %0.4f &%0.4f &%0.4f &%0.4f &%0.4f &%0.4f &%0.4f &%0.4f \\\\ \hline
 \end{tabular}
-\caption{Results of SVM classification.}
-\label{table:results}
+\caption{Results of SVM crossvalidation. $\alpha_{thresh} = 1 \times 10^{-8}$. Highest Test Accuracy: 0.9539}
+\label{table:crossval_}
 \end{table*}
 """ % nums
 

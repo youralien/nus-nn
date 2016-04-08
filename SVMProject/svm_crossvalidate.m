@@ -5,7 +5,7 @@ labeltmp = label;
 load(strcat(['test.mat']))
 data = [data, datatmp];
 label = [label', labeltmp']';
-% shuffle data
+shuffle data
 shuffle_idx = randperm(length(label));
 data = data(:,shuffle_idx);
 label = label(shuffle_idx);
@@ -33,7 +33,7 @@ for ith=1:length(ps)
             vaX = data(:, valid_idx);
             vaY = label(valid_idx);
             
-            svm = SVMEstimator(Cs(jth),kernel_types{ith},ps(ith),1e-10);
+            svm = SVMEstimator(Cs(jth),kernel_types{ith},ps(ith),1e-6);
             svm.fit(trX, trY);
             
 %             subplot(5,5,ith*jth)

@@ -11,7 +11,7 @@ function visualize_toydata(trX, trY, svm)
     bound_idx = find(abs(g_randompts) < 0.05);
     
     % plot support vectors
-    plot(svm.sv_data(1,:), svm.sv_data(2,:), 'm*');
+%     plot(svm.sv_data(1,:), svm.sv_data(2,:), 'm*');
     
     % plot decision boundary
     plot(Xbound(1, bound_idx), Xbound(2,bound_idx), 'b.');

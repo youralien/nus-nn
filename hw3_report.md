@@ -27,9 +27,6 @@ trX = np.arange(-1,1,0.05)
 teX = np.arange(-1,1,0.01)
 trY = noisy_func(trX) # observed training data is noisy
 teY = func(teX)       # actual test data is the real function
-#TODO: plot y values
-n_tr = trX.shape[0]
-n_te = teX.shape[0]
 
 rbf = lambda r, std: np.exp(-r**2 / (2.*std**2) )
 
@@ -46,19 +43,13 @@ class ExtactInterpolationRBFNetwork():
         self.std = std
 
     def fit(self, trX, trY):
-
         n_tr = trY.shape[0]
         interpM = np.zeros((n_tr, n_tr), dtype='float32')
         for i in xrange(n_tr):
             for j in xrange(n_tr):
                 interpM[i,j] = rbf(np.linalg.norm(trX[i] - trX[j]), self.std)
-        # TODO: interp matrix should have diag of 1's
-        # TODO: interp matrix should also have interesting vals outside of diagonals
         self.w = np.dot(trY,np.linalg.inv(interpM))
         self.mu = trX # mu is the training examples
-        # TODO: w should be the same shape as trY
-        # TODO: interpM * w should yield good accuracies
-        assert self.w.shape == trY.shape
 
     def predict(self, teX):
         act = np.zeros((teX.shape[0], self.w.shape[0]), dtype='float32')
@@ -70,7 +61,6 @@ class ExtactInterpolationRBFNetwork():
         teXpred = np.dot(act, model.w)
         return teXpred
 
-
 model = ExtactInterpolationRBFNetwork()
 model.fit(trX, trY)
 teXpred = model.predict(teX)
@@ -81,7 +71,7 @@ error = np.mean(np.abs(teXpred - teY))
 
 ![Random Fixed Centers RBF Network. Average MAE 0.8861; Histogram distribution of the MAE over the 100 trials](mnist/Q1partBhist.png){width=400px}
 
-From part A, the mean error was 0.2614, while the mean error for part B is 0.9036. This Randomized Centers RBF Network used 15 Hidden RBF activation functions, as opposed to the 40 that the exact interpolation case used. While 40 hidden units intuitively means to me more expressive power, I think that more expressive power could be to the detriment of a model which may overfit on
+From part A, the mean error was 0.2380, while the mean error for part B is 0.8861. This Randomized Centers RBF Network used 15 Hidden RBF activation functions, as opposed to the 40 that the exact interpolation case used. While 40 hidden units intuitively means to me more expressive power, I think that more expressive power could be to the detriment of a model which may overfit on
 the training data.  The higher error or poorer performance might be attributed to the fact that the 15 randomly selected centers may not have been a representative bunch. In addition, maybe the complexity of the function requires more hidden units to accurately model it.
 
 A similar code structure was used to answer this question, with a class that was adapted for the Random Fixed Centers method:
@@ -185,15 +175,25 @@ self.w = np.dot(
 ```
 
 ## Q2 preface)
+For the following subparts of the question 2, I did not use the `MNIST.mat` file provided via IVLE.  Instead, I selected a random subset of 2000 MNIST train examples for my training set, and random subset of 1000 images from the test set for my test set.  From there, I selected classes `3` and `4`, since these are the last digits of my student ID number.
+
 ## Q2 a)
+
+In this example, the MNIST dataset was learned using an Exact Interpolation Method RBF Network, where the RBF is a Gaussian Function with $\sigma = 100$. Using the fitting procedure, weights of the RBFN were determined; they were then used to predict on both the train and test set.  Using the provided evaluation code, the results are given in the following figure.
+
+Please see the class definition of `ExtactInterpolationRBFNetwork` in Question 1a for the program that produced these results.
 
 ![Exact Interpolation Method with standard deviation of 100](mnist/Q2partAeval.png){width=300px}
 
 ## Q2 b)
+Following the strategy of “Fixed Centers Selected at Random”, 100 centers among the training samples were selected at random. The weights of the RBFN were determined and the MNIST recognition accuracy was determined for the train and test set.  If we compare this to the results of the `ExtactInterpolationRBFNetwork`, we observe that the random centers method produces good accuracies only with a very narrow threshold (test accuracy greater than 0.8 can only be obtained with a small window of threshold between 0.0 - 0.05).  In contrast, the exact interpolation network is able to achieve test accuracies above 0.8 with a maximum near 0.98 over a far wider range of thresholds `[0.2, 0.8]`.
+
+Please see the class definition of `RandomFixedCentersRBFNetwork` in Question 1b for the program that produced these results.
 
 ![100 Randomly Selected Centers](mnist/Q2partBeval.png){width=300px}
 
 ## Q2 c)
+To study the effect of regularization on the performance of the RBF network, I took the same centers and widths from the `ExactInterpolationNetwork` in part A and used the weight update rule for regularized RBF networks. Evaluation plots were generated for different values of regularization term $\lambda$, contained in the set `{1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1}`. The trend is that the evaluation has higher average accuracies over the whole range of thresholds for lower regularizations.  For higher regularizations, the top performance of the test set does not degrade; however, thresholds chosen closer to the limits `{0, 1}` are less.
 
 ![$\lambda = 0.0001$](mnist/Q2partCLambda0.0001.png){width=300px}
 
@@ -208,6 +208,7 @@ self.w = np.dot(
 ![$\lambda = 10.0$](mnist/Q2partCLambda10.0.png){width=300px}
 
 ## Q2 d)
+The figures in this section depict the effect of varying width of the RBF function on performance on the MNIST dataset. Most strikingly, the width $\sigma$ of the RBF function has a large effect on the overall performance.  We can see that for small values of $\sigma$, the RBF cannot accuractely represent any patterns in the data, and the accuracy for train is close to 50% (random guessing), while the test accuracy is even worse.  This observation is consistent for all threshold values.  On the opposite extreme, a width that is too large has the same effect, except that the window of thresholds for which it holds is even narrower.  The perfect balance, for this dataset, is for $\sigma = {10, 100}$. This hyper parameter could change based on datasets, which illuminates some fault in the RBF Network.
 
 ![$\sigma = 0.1$](mnist/Q2partDwidth0.1.png){width=300px}
 
@@ -226,10 +227,14 @@ Since my student ID ends in `43`, I worked with the all the MNIST digits excludi
 Instead of using the MNIST.mat file, I used the full MNIST dataset, with 60000 training examples and 10000 test examples. While my training process might have randomly selected a more diverse set of numbers, my model is more thoroughly evaluated on a larger test set.
 
 ## Q3 a)
+After training, the label of each particular neuron in the SOM was determined by the label of the input vector in the training set which is closest to that particular neuron.  Instead of taking the label, I reshaped the input vector into its original `28x28` image, showing exactly what the closest example to the neuron in the training set looks like. The results of this visualization is exciting, because we can see that the 8 digits cluster on the map quite well.  Different rotations and skews of `0`'s are found in the top right hand corner, while similar variations in `1`'s are found in the bottom left hand corner.
 
 ![10 x 10 Self Organizing Map Lattice, closest training image visualized](mnist/nearest_example_inverted.png)
 
 ## Q3 b)
+The weight values visualized illuminates a lot about the prototypical digit examples, as well as the structure of the SOM.  On the very bottom, we can see the threshold between a digit that looks like a slanted `1` vs a `2`.  These weights during the training process were updated with very similar values as they are located in a similar neighborhood.  The reason one weight looks more like a `1` vs a `2` is the surrounding neighbors which lie on the opposite side of one another.
+
+In addition, I visualize the weights of a `25x25` SOM lattice, which captures even more of the nuances between different variations of hand written digits. These nuances are helpful later when we discuss the improvement in recognition accuracy between the `10x10` vs `25x25` SOM.
 
 ![10 x 10 Self Organizing Map Lattice, weight values visualized](mnist/weights_inverted.png)
 

@@ -75,6 +75,11 @@ classdef SVMEstimator < handle
             % choose a random b
             % rand_sv = sv_idx(randperm(length(sv_idx),1));
             % this.b = 1 / Y(rand_sv) - sum(alpha .* Y .* K(:,rand_sv));
+            
+            % calculate b using w (wrong!)
+%             w = sum(bsxfun(@times, bsxfun(@times, alpha, Y), X'));
+%             random_sv = sv_idx(randperm(length(sv_idx),1));
+%             this.b = 1 / Y(random_sv) - w*X(:,random_sv);
         end
         
         function g = discriminate(this, X)

@@ -17,7 +17,7 @@ kernel_types = {'linear', 'poly', 'poly', 'poly', 'poly'};
 
 for ith=1:length(ps)
     for jth=1:length(Cs)
-        svm = SVMEstimator(Cs(jth),kernel_types{ith},ps(ith));
+        svm = SVMEstimator(Cs(jth),kernel_types{ith},ps(ith), 1e-6);
         svm.fit(trX, trY);
         
         subplot(5,5,ith*jth)
