@@ -20,8 +20,10 @@ for ith=1:length(ps)
         svm = SVMEstimator(Cs(jth),kernel_types{ith},ps(ith), 1e-6);
         svm.fit(trX, trY);
         
-        subplot(5,5,ith*jth)
-        hist(svm.alpha, 100)
+        subplot(5,5,(ith-1)*5 + jth)
+        hist(svm.alpha, 20)
+        xlabel([svm.kernel_type ' C=' sprintf('%0.5g', svm.C)])
+        ylabel(sprintf('%0.5g', prctile(svm.alpha, 80)))
         
         pred_train = svm.predict(trX);
         pred_test = svm.predict(teX);
