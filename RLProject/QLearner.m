@@ -23,12 +23,21 @@ function ys = QLearner
 task1 = load('task1.mat'); % has the reward variable
 
     function a_k = epsilonGreedy(reward, s_k, epsilon)
+        reward_for_actions = reward(s_k,:);
+        % for reward values equal, max returns first instance, and thus is biased towards actions
+        [~, a_k_exploit] = max(reward_for_actions);
+
         if rand() < epsilon % exploration
-            valid_actions = find(reward(s_k,:) > 0);
-            a_k = randsample(valid_actions, 1);
+            valid_actions = find(reward_for_actions > 0);
+            % explore choices we would not normally exploit
+            while true
+                a_k = randsample(valid_actions, 1); % choose one from the valid_actions
+                if a_k ~= a_k_exploit
+                    break
+                end
+            end
         else % exploitation
-            reward_for_actions = reward(s_k,:);
-            [~, a_k] = max(reward_for_actions);
+            a_k = a_k_exploit;
         end
     end
 
@@ -62,8 +71,28 @@ task1 = load('task1.mat'); % has the reward variable
         end
     end
 
-s_k = 11
-a_k = epsilonGreedy(task1.reward, s_k, 0.2)
+    function [Q, N] = QLearnOneTrial(Q, N, discount, decay_type)
+        iterations = 10000; % some big number, almost like a while loop
+        s = ones(iterations,1);
+        a = ones(iterations,1);
+
+        for k=1:iterations
+            alpha = decay(k, decay_type); % type of decay?
+            epsilon = alpha; % epsilon and alpha the same
+            a(k) = epsilonGreedy(task1.reward, s(k), epsilon);
+%             disp([s(k) a(k)]);
+            s(k+1) = transition(s(k), a(k));
+            N(s(k),a(k)) = N(s(k),a(k)) + 1;
+            Q(s(k),a(k)) = Q(s(k),a(k)) + alpha*(task1.reward(s(k),a(k)) + discount*max(Q(s(k+1),:)) - Q(s(k),a(k)));
+            if s(k+1) == 100 || alpha < 0.005 % stop condition for trial
+                disp(['final state: ' num2str(s(k+1)) ', alpha: ' num2str(alpha)]);
+                break
+            end
+        end
+    end
+
+s_k = 1
+a_k = epsilonGreedy(task1.reward, s_k, 1)
 s_k1 = transition(s_k, a_k)
 
 iter = 300;
@@ -74,20 +103,24 @@ for type=1:4
     end
 end
 
-% one trial
 discount = 0.9;
-s = ones(3000,1);
-a = ones(3000,1);
+decay_type = 2;
 Q = zeros(100,4);
 N = zeros(100,4);
-for k=1:3000
-   alpha = decay(k, 2);
-   epsilon = alpha; % aliasing?
-   a(k) = epsilonGreedy(task1.reward, s(k), epsilon);
-   disp([s(k) a(k)]);
-   s(k+1) = transition(s(k), a(k));
-   N(s(k),a(k)) = N(s(k),a(k)) + 1;
-   Q(s(k),a(k)) = Q(s(k),a(k)) + alpha*(task1.reward(s(k),a(k)) + discount*max(Q(s(k+1),:)) - Q(s(k),a(k)));
+diffQ = ones(3000,1);
+convergence_thresh = 0.05;
+for trial=1:3000
+    [Qnew, N] = QLearnOneTrial(Q, N, discount, decay_type);
+    diffQ(trial) = mean((Qnew(:) - Q(:)) .^ 2);
+    if trial > 1
+        % make diffQ a moving average of previous values
+        diffQ(trial) = 0.5*diffQ(trial) + 0.95*diffQ(trial-1);
+        if diffQ(trial) < 0.001
+            break
+        end
+        plot(diffQ(1:trial)); ylabel('||Qnew - Q||'); xlabel('Trials');
+        pause(0.1);
+    end
+    Q = Qnew;
 end
-
 end
