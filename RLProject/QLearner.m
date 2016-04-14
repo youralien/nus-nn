@@ -114,7 +114,7 @@ for trial=1:3000
     diffQ(trial) = mean((Qnew(:) - Q(:)) .^ 2);
     if trial > 1
         % make diffQ a moving average of previous values
-        diffQ(trial) = 0.5*diffQ(trial) + 0.95*diffQ(trial-1);
+        diffQ(trial) = 0.05*diffQ(trial) + 0.95*diffQ(trial-1);
         if diffQ(trial) < 0.001
             break
         end
