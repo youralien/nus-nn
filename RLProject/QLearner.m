@@ -1,4 +1,4 @@
-function ys = QLearner
+function QLearner
 % Parameters
 % ----------
 % epsilon: float (0 - 1)
@@ -91,36 +91,32 @@ task1 = load('task1.mat'); % has the reward variable
         end
     end
 
-s_k = 1
-a_k = epsilonGreedy(task1.reward, s_k, 1)
-s_k1 = transition(s_k, a_k)
-
-iter = 300;
-ys = zeros(iter,4);
-for type=1:4
-    for k=1:iter
-        ys(k,type) = decay(k,type);
+    function [Q, N] = QLearnManyTrial(discount, decay_type, convergence_thresh, plotting)
+        Q = zeros(100,4);
+        N = zeros(100,4);
+        diffQ = ones(3000,1);
+        for trial=1:3000
+            [Qnew, N] = QLearnOneTrial(Q, N, discount, decay_type);
+            diffQ(trial) = mean((Qnew(:) - Q(:)) .^ 2);
+            if trial > 1
+                % make diffQ a moving average of previous values
+                diffQ(trial) = 0.05*diffQ(trial) + 0.95*diffQ(trial-1);
+                if diffQ(trial) < convergence_thresh
+                    break
+                end
+                if plotting && mod(trial, 5) == 0
+                    plot(diffQ(1:trial)); ylabel('||Qnew - Q||'); xlabel('Trials');
+                    pause(0.1);
+                end
+            end
+            Q = Qnew;
+        end
     end
-end
 
 discount = 0.9;
 decay_type = 2;
-Q = zeros(100,4);
-N = zeros(100,4);
-diffQ = ones(3000,1);
-convergence_thresh = 0.05;
-for trial=1:3000
-    [Qnew, N] = QLearnOneTrial(Q, N, discount, decay_type);
-    diffQ(trial) = mean((Qnew(:) - Q(:)) .^ 2);
-    if trial > 1
-        % make diffQ a moving average of previous values
-        diffQ(trial) = 0.05*diffQ(trial) + 0.95*diffQ(trial-1);
-        if diffQ(trial) < 0.001
-            break
-        end
-        plot(diffQ(1:trial)); ylabel('||Qnew - Q||'); xlabel('Trials');
-        pause(0.1);
-    end
-    Q = Qnew;
-end
+thresh = 0.05;
+do_plot = true;
+[Q, N] = QLearnManyTrial(discount, decay_type, thresh, do_plot)
+
 end
