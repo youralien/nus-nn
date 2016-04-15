@@ -22,55 +22,6 @@ function QLearner
 % N: all the updated N values of the state-action board
 task1 = load('task1.mat'); % has the reward variable
 
-    function a_k = epsilonGreedy(reward, s_k, epsilon)
-        reward_for_actions = reward(s_k,:);
-        % for reward values equal, max returns first instance, and thus is biased towards actions
-        [~, a_k_exploit] = max(reward_for_actions);
-
-        if rand() < epsilon % exploration
-            valid_actions = find(reward_for_actions > 0);
-            % explore choices we would not normally exploit
-            while true
-                a_k = randsample(valid_actions, 1); % choose one from the valid_actions
-                if a_k ~= a_k_exploit
-                    break
-                end
-            end
-        else % exploitation
-            a_k = a_k_exploit;
-        end
-    end
-
-    function s_k1 = transition(s_k, a_k, n_states, shp)
-        if nargin < 3 % default to 100 states, 10x10 grid
-            n_states = 100;
-            shp = [10 10];
-        end
-        action_movements = [
-            -1, 0; % up
-            0, 1; % right
-            1, 0; % down
-            0,-1;]; % left
-        [s_k_i, s_k_j] = ind2sub(shp,s_k); % current state i,j
-        s_k1_sub = [s_k_i, s_k_j] + action_movements(a_k,:); % next state i,j
-        s_k1 = sub2ind(shp, s_k1_sub(1), s_k1_sub(2)); % next state
-    end
-
-    function mult = decay(k, type)
-        if type == 1
-            mult = 1 / k;
-        elseif type == 2
-            mult = 100 / (100 + k);
-        elseif type == 3
-            mult = (1 + log(k)) / k;
-        else
-            mult = (1 + 5*log(k)) / k;
-        end
-        if mult > 1
-            mult = 1;
-        end
-    end
-
     function [Q, N] = QLearnOneTrial(Q, N, discount, decay_type)
         iterations = 10000; % some big number, almost like a while loop
         s = ones(iterations,1);
@@ -117,6 +68,6 @@ discount = 0.9;
 decay_type = 2;
 thresh = 0.05;
 do_plot = true;
-[Q, N] = QLearnManyTrial(discount, decay_type, thresh, do_plot)
+[Q, N] = QLearnManyTrial(discount, decay_type, thresh, do_plot);
 
 end
