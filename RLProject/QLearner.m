@@ -22,52 +22,39 @@ function QLearner
 % N: all the updated N values of the state-action board
 task1 = load('task1.mat'); % has the reward variable
 
-    function [Q, N] = QLearnOneTrial(Q, N, discount, decay_type)
-        iterations = 10000; % some big number, almost like a while loop
-        s = ones(iterations,1);
-        a = ones(iterations,1);
-
-        for k=1:iterations
-            alpha = decay(k, decay_type); % type of decay?
-            epsilon = alpha; % epsilon and alpha the same
-            a(k) = epsilonGreedy(task1.reward, s(k), epsilon);
-%             disp([s(k) a(k)]);
-            s(k+1) = transition(s(k), a(k));
-            N(s(k),a(k)) = N(s(k),a(k)) + 1;
-            Q(s(k),a(k)) = Q(s(k),a(k)) + alpha*(task1.reward(s(k),a(k)) + discount*max(Q(s(k+1),:)) - Q(s(k),a(k)));
-            if s(k+1) == 100 || alpha < 0.005 % stop condition for trial
-                disp(['final state: ' num2str(s(k+1)) ', alpha: ' num2str(alpha)]);
-                break
-            end
+thresh = 0.5;
+do_plot = false;
+runs = 10;
+table_goal_reached_runs = zeros(4,2);
+table_execution_time = zeros(4,2);
+discounts = [0.5, 0.9];
+for i=1:length(discounts)
+    discount = discounts(i);
+    for decay_type=[1 2 3 4]
+        Qs = zeros(100, 4, runs);
+        success_rates = zeros(runs, 1);
+        optimal_policy = zeros(100, runs);
+        totalReward = zeros(runs, 1);
+        times = zeros(runs,1);
+        parfor run=1:runs
+            [Qs(:,:,run), ~, times(run), success_rates(run)] = QLearnManyTrial(task1.reward, discount, decay_type, thresh, do_plot);
+            optimal_policy(:,run) = calculateOptimalPolicy(Qs(:,:,run));
+            totalReward(run) = walkOptimalPolicy(optimal_policy(:,run), task1.reward);
+        end
+        % save the outputs required for the Q learning param values and
+        % performance table
+        goalReachedRuns = find(totalReward > 0);
+        table_goal_reached_runs(decay_type,i) = length(goalReachedRuns);
+        table_execution_time(decay_type,i) = mean(times(goalReachedRuns));
+        % final output should be an optimal policy (if goal state reached
+        % in the 10 runs) and the reward associated with this optimal
+        % policy. optimal policy is a state vector, and also should be
+        % visualized in the 10 x 10 grid
+        if length(goalReachedRuns) > 0
+            fn = ['policy_discount' num2str(discount) '_decay' int2str(decay_type)];
+            save(fn, 'optimal_policy', 'totalReward');
         end
     end
-
-    function [Q, N] = QLearnManyTrial(discount, decay_type, convergence_thresh, plotting)
-        Q = zeros(100,4);
-        N = zeros(100,4);
-        diffQ = ones(3000,1);
-        for trial=1:3000
-            [Qnew, N] = QLearnOneTrial(Q, N, discount, decay_type);
-            diffQ(trial) = mean((Qnew(:) - Q(:)) .^ 2);
-            if trial > 1
-                % make diffQ a moving average of previous values
-                diffQ(trial) = 0.05*diffQ(trial) + 0.95*diffQ(trial-1);
-                if diffQ(trial) < convergence_thresh
-                    break
-                end
-                if plotting && mod(trial, 5) == 0
-                    plot(diffQ(1:trial)); ylabel('||Qnew - Q||'); xlabel('Trials');
-                    pause(0.1);
-                end
-            end
-            Q = Qnew;
-        end
-    end
-
-discount = 0.9;
-decay_type = 2;
-thresh = 0.05;
-do_plot = true;
-[Q, N] = QLearnManyTrial(discount, decay_type, thresh, do_plot);
+end
 
 end
