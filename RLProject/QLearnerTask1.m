@@ -1,4 +1,4 @@
-function results_table = QLearner()
+function results_table = QLearnerTask1()
 % Parameters
 % ----------
 % epsilon: float (0 - 1)
