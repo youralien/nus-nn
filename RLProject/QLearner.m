@@ -1,4 +1,4 @@
-function QLearner
+function results_table = QLearner()
 % Parameters
 % ----------
 % epsilon: float (0 - 1)
@@ -51,10 +51,11 @@ for i=1:length(discounts)
         % policy. optimal policy is a state vector, and also should be
         % visualized in the 10 x 10 grid
         if length(goalReachedRuns) > 0
-            fn = ['policy_discount' num2str(discount) '_decay' int2str(decay_type)];
+            fn = ['policy_discount' num2str(discount) '_decay' int2str(decay_type) '.mat'];
             save(fn, 'optimal_policy', 'totalReward');
         end
+        disp(['DONE: ' num2str(discount) int2str(decay_type)]);
     end
 end
-
+results_table = [table_goal_reached_runs, table_execution_time];
 end
