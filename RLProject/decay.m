@@ -7,15 +7,27 @@ function mult = decay(k, type)
 
 % mult: multiplier between (0 - 1) specifying how much to decay the initial
 % value
-
-if type == 1
+if type == 0
+    mult = 0.2; % constant rate
+elseif type == 1
     mult = 1 / k;
 elseif type == 2
     mult = 100 / (100 + k);
 elseif type == 3
     mult = (1 + log(k)) / k;
-else
+elseif type == 4
     mult = (1 + 5*log(k)) / k;
+else
+    deltaxs = [100, 300, 600, 900];
+    deltax = deltaxs(type - 4);
+    % linear decay to 300?  300 came from the xlim of my original decay
+    % graph.
+    deltay = 0.9; % 1 - 0.1
+    if k > deltax
+        mult = 0.1;
+    else
+        mult = -(deltay/deltax)*k + 1; % y = mx + b
+    end
 end
 if mult > 1
     mult = 1;

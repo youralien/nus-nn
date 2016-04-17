@@ -1,12 +1,12 @@
-function [Q, N, reached_goal] = QLearnOneTrial(reward, Q, N, discount, decay_type)
+function [Q, N, reached_goal] = QLearnOneTrial(reward, Q, N, discount, a_decay_type, e_decay_type)
 iterations = 10000; % some big number, almost like a while loop
 s = ones(iterations,1);
 a = ones(iterations,1);
 reached_goal = false;
 
 for k=1:iterations
-    alpha = decay(k, decay_type); % type of decay?
-    epsilon = alpha; % epsilon and alpha the same
+    alpha = decay(k, a_decay_type);
+    epsilon = decay(k, e_decay_type);
     a(k) = epsilonGreedy(reward, s(k), epsilon);
     s(k+1) = transition(s(k), a(k));
     N(s(k),a(k)) = N(s(k),a(k)) + 1;

@@ -30,14 +30,14 @@ table_execution_time = zeros(4,2);
 discounts = [0.5, 0.9];
 for i=1:length(discounts)
     discount = discounts(i);
-    for decay_type=[1 2 3 4]
+    for decay_type=[1 2 3 4] % epsilon and alpha decay the same
         Qs = zeros(100, 4, runs);
         success_rates = zeros(runs, 1);
         optimal_policy = zeros(100, runs);
         totalReward = zeros(runs, 1);
         times = zeros(runs,1);
         parfor run=1:runs
-            [Qs(:,:,run), ~, times(run), success_rates(run)] = QLearnManyTrial(task1.reward, discount, decay_type, thresh, do_plot);
+            [Qs(:,:,run), ~, times(run), success_rates(run)] = QLearnManyTrial(task1.reward, discount, decay_type, decay_type, thresh, do_plot);
             optimal_policy(:,run) = calculateOptimalPolicy(Qs(:,:,run));
             totalReward(run) = walkOptimalPolicy(optimal_policy(:,run), task1.reward);
         end
