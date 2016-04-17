@@ -12,6 +12,7 @@ function [] = plot_grid(optimal_policy)
 figure
 grid on
 axis([0 10 0 10])
+set(gca,'xticklabel',[], 'yticklabel',[]) 
 
 state = 1;
 n = 0;
