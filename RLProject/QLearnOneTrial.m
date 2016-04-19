@@ -1,5 +1,5 @@
 function [Q, N, reached_goal] = QLearnOneTrial(reward, Q, N, discount, a_decay_type, e_decay_type)
-iterations = 10000; % some big number, almost like a while loop
+iterations = 300; % some big number, almost like a while loop
 s = ones(iterations,1);
 a = ones(iterations,1);
 reached_goal = false;

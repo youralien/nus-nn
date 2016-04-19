@@ -8,7 +8,7 @@ function mult = decay(k, type)
 % mult: multiplier between (0 - 1) specifying how much to decay the initial
 % value
 if type == 0
-    mult = 0.5; % constant rate
+    mult = 1; % constant rate
 elseif type == 1
     mult = 1 / k;
 elseif type == 2
